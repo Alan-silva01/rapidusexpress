@@ -20,10 +20,7 @@ const NewClientForm: React.FC<NewClientFormProps> = ({ onClose, onSuccess }) => 
         numero: '',
         bairro: 'Centro',
         cidade: 'Açailândia',
-        estado: 'MA',
-        latitude: '',
-        longitude: '',
-        google_maps_url: ''
+        estado: 'MA'
     });
 
     const formatWhatsApp = (phone: string) => {
@@ -71,12 +68,7 @@ const NewClientForm: React.FC<NewClientFormProps> = ({ onClose, onSuccess }) => 
                     numero: formData.numero
                 },
                 telefone: whatsappFormatted,
-                descricao: formData.descricao,
-                localizacao: {
-                    latitude: parseFloat(formData.latitude) || 0,
-                    longitude: parseFloat(formData.longitude) || 0,
-                    google_maps_url: formData.google_maps_url
-                }
+                descricao: formData.descricao
             };
 
             // Inserimos APENAS na tabela 'clientes'. 
@@ -211,34 +203,6 @@ const NewClientForm: React.FC<NewClientFormProps> = ({ onClose, onSuccess }) => 
                                     />
                                 </InputGroup>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <InputGroup label="Latitude" icon={<MapPin size={16} />}>
-                                    <input
-                                        value={formData.latitude}
-                                        onChange={e => setFormData({ ...formData, latitude: e.target.value })}
-                                        className="input-base"
-                                        placeholder="-4.9479"
-                                    />
-                                </InputGroup>
-                                <InputGroup label="Longitude" icon={<MapPin size={16} />}>
-                                    <input
-                                        value={formData.longitude}
-                                        onChange={e => setFormData({ ...formData, longitude: e.target.value })}
-                                        className="input-base"
-                                        placeholder="-47.5010"
-                                    />
-                                </InputGroup>
-                            </div>
-
-                            <InputGroup label="URL Google Maps" icon={<MapPin size={16} />}>
-                                <input
-                                    value={formData.google_maps_url}
-                                    onChange={e => setFormData({ ...formData, google_maps_url: e.target.value })}
-                                    className="input-base text-[10px]"
-                                    placeholder="https://goo.gl/maps/..."
-                                />
-                            </InputGroup>
                         </div>
                     </div>
 
@@ -272,7 +236,7 @@ const NewClientForm: React.FC<NewClientFormProps> = ({ onClose, onSuccess }) => 
                     background: #141414;
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 

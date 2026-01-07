@@ -227,7 +227,10 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                   <div onClick={() => setSelectedDelivery(delivery)} className="flex justify-between items-start mb-4 cursor-pointer">
                     <div>
                       <h4 className="text-sm font-black text-white">{delivery.estabelecimentos?.nome || 'Estabelecimento'}</h4>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Sua parte: <span className="text-orange-primary">R$ {parseFloat(delivery.valor_entregador).toFixed(2)}</span></p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">
+                        {profile.funcao === 'admin' ? 'Valor Total: ' : 'Sua parte: '}
+                        <span className="text-orange-primary">R$ {parseFloat(profile.funcao === 'admin' ? delivery.valor_total : delivery.valor_entregador).toFixed(2)}</span>
+                      </p>
                     </div>
                     <div className="bg-orange-primary text-white px-2 py-1 rounded-md">
                       <span className="text-[9px] font-black uppercase tracking-widest">Abrir</span>
@@ -269,7 +272,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                           <p className="text-[10px] font-black uppercase tracking-widest text-orange-primary mt-0.5">{info.label}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-black text-white">R$ {parseFloat(task.valor_entregador).toFixed(2)}</p>
+                          <p className="text-sm font-black text-white">R$ {parseFloat(profile.funcao === 'admin' ? task.valor_total : task.valor_entregador).toFixed(2)}</p>
                           <ChevronRight size={14} className={`text-gray-700 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-orange-primary' : ''}`} />
                         </div>
                       </div>
@@ -329,16 +332,16 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
 
       <div className="grid grid-cols-2 gap-4">
         <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
-          <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Saldo para Receber</p>
+          <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">{profile.funcao === 'admin' ? 'Seus Ganhos Totais' : 'Saldo para Receber'}</p>
           <p className="text-xl font-black text-white tracking-tighter">R$ {parseFloat(driverProfile.saldo?.toString() || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">Disponível para saque</p>
+          {profile.funcao !== 'admin' && <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">Disponível para saque</p>}
         </div>
         <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
           <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Ganhos Hoje (Total)</p>
           <p className="text-xl font-black text-lime-500 tracking-tighter">R$ {
-            todayDeliveries.reduce((acc, curr) => acc + parseFloat(curr.valor_entregador), 0).toFixed(2)
+            todayDeliveries.reduce((acc, curr) => acc + parseFloat(profile.funcao === 'admin' ? curr.valor_total : curr.valor_entregador), 0).toFixed(2)
           }</p>
-          <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">{todayDeliveries.length} entregas hoje</p>
+          <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">{todayDeliveries.length} {todayDeliveries.length === 1 ? 'entrega hoje' : 'entregas hoje'}</p>
         </div>
       </div>
 
@@ -369,7 +372,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                       </div>
                     </div>
                     <div className="text-right flex items-center gap-2">
-                      <p className="text-xs font-black text-white">R$ {parseFloat(delivery.valor_entregador).toFixed(2)}</p>
+                      <p className="text-xs font-black text-white">R$ {parseFloat(profile.funcao === 'admin' ? delivery.valor_total : delivery.valor_entregador).toFixed(2)}</p>
                       <ChevronRight size={10} className={`text-gray-800 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
                     </div>
                   </div>
@@ -429,8 +432,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Seu Ganho</p>
-                <p className="text-2xl font-black text-orange-primary">R$ {parseFloat(selectedDelivery.valor_entregador).toFixed(2)}</p>
+                <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">{profile.funcao === 'admin' ? 'Valor da Entrega' : 'Seu Ganho'}</p>
+                <p className="text-2xl font-black text-orange-primary">R$ {parseFloat(profile.funcao === 'admin' ? selectedDelivery.valor_total : selectedDelivery.valor_entregador).toFixed(2)}</p>
               </div>
             </div>
 
