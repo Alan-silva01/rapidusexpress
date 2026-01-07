@@ -33,9 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, role, currentView, onV
               <MobileNavItem active={currentView === 'drivers'} onClick={() => onViewChange('drivers')} icon={<Users size={18} strokeWidth={1.5} />} />
             )}
 
-            {role === 'admin' && (
-              <MobileNavItem active={currentView === 'finance'} onClick={() => onViewChange('finance')} icon={<DollarSign size={18} strokeWidth={1.5} />} />
-            )}
+            <MobileNavItem active={currentView === 'finance'} onClick={() => onViewChange('finance')} icon={<DollarSign size={18} strokeWidth={1.5} />} />
 
             <MobileNavItem active={currentView === 'profile'} onClick={() => onViewChange('profile')} icon={<User size={18} strokeWidth={1.5} />} />
           </nav>

@@ -110,7 +110,6 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, onLogout }) => {
           <InputGroup label="Nome Completo" icon={<User size={16} />} value={formData.nome} onChange={(v: string) => setFormData({ ...formData, nome: v })} />
           <InputGroup label="WhatsApp" icon={<Phone size={16} />} value={formData.telefone} onChange={(v: string) => setFormData({ ...formData, telefone: v })} />
           <InputGroup label="Chave PIX" icon={<CreditCard size={16} />} value={formData.chave_pix} onChange={(v: string) => setFormData({ ...formData, chave_pix: v })} />
-          <InputGroup label="Localização" icon={<MapPin size={16} />} value={formData.endereco} onChange={(v: string) => setFormData({ ...formData, endereco: v })} />
 
           {profile.funcao === 'entregador' && (
             <div className="grid grid-cols-2 gap-4 pt-2">
@@ -126,6 +125,21 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, onLogout }) => {
           className="w-full h-16 bg-orange-primary text-white rounded-3xl font-black flex items-center justify-center gap-2 shadow-xl shadow-orange-primary/20 transition-all active:scale-95 disabled:opacity-50 text-[11px] uppercase tracking-widest"
         >
           {loading ? <Loader2 className="animate-spin" size={20} /> : <><Check size={18} /> Salvar Configurações</>}
+        </button>
+
+        <button
+          type="button"
+          onClick={async () => {
+            const email = profile.email || (await supabase.auth.getUser()).data.user?.email;
+            if (email) {
+              const { error } = await supabase.auth.resetPasswordForEmail(email);
+              if (error) alert('Erro ao enviar e-mail: ' + error.message);
+              else alert('E-mail de redefinição enviado!');
+            }
+          }}
+          className="w-full h-14 bg-white/5 text-gray-400 rounded-3xl font-black flex items-center justify-center gap-2 border border-white/5 transition-all active:scale-95 text-[9px] uppercase tracking-widest"
+        >
+          Redefinir Senha
         </button>
       </form>
     </div>

@@ -411,8 +411,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       )}
 
       {modalType === 'success' && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-fade">
-          <div className="glass-card p-8 rounded-[2.5rem] w-full max-w-xs text-center border-orange-primary/20">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md overflow-y-auto overflow-x-hidden" onClick={() => setModalType(null)}>
+          <div className="glass-card w-full max-w-sm p-8 rounded-[2.5rem] border-white/10 my-auto shadow-2xl text-center" onClick={e => e.stopPropagation()}>
             <div className="w-16 h-16 bg-orange-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-orange-primary">
               <CheckCircle2 size={40} />
             </div>
@@ -424,8 +424,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       )}
 
       {selectedDelivery && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade" onClick={() => setSelectedDelivery(null)}>
-          <div className="w-full max-w-xl bg-[#0A0A0A] rounded-[3rem] border border-white/5 p-8 pb-12 overflow-y-auto max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md overflow-y-auto overflow-x-hidden" onClick={() => setSelectedDelivery(null)}>
+          <div className="w-full max-w-xl bg-zinc-950 rounded-[3rem] border border-white/5 p-8 pb-12 my-auto shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="w-12 h-1.5 bg-gray-900 rounded-full mx-auto mb-8"></div>
 
             <div className="flex justify-between items-start mb-8">
