@@ -19,6 +19,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
   const [assignedDeliveries, setAssignedDeliveries] = useState<any[]>([]);
   const [activeDeliveries, setActiveDeliveries] = useState<any[]>([]);
   const [historyDeliveries, setHistoryDeliveries] = useState<any[]>([]);
+  const [todayDeliveries, setTodayDeliveries] = useState<any[]>([]);
   const [selectedDelivery, setSelectedDelivery] = useState<any | null>(null);
 
   useEffect(() => {
@@ -72,7 +73,13 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
 
       setAssignedDeliveries(data?.filter(d => d.status === 'atribuida') || []);
       setActiveDeliveries(data?.filter(d => ['aceita', 'coletada', 'em_rota'].includes(d.status)) || []);
-      setHistoryDeliveries(data?.filter(d => d.status === 'finalizada').slice(0, 5) || []);
+
+      const finalizadas = data?.filter(d => d.status === 'finalizada') || [];
+      const hoje = new Date().toISOString().split('T')[0];
+      const hojeOnly = finalizadas.filter(d => d.criado_at.startsWith(hoje));
+
+      setHistoryDeliveries(finalizadas.slice(0, 20));
+      (window as any).data_hoje_only = hojeOnly; // Gambiarra temporária para simplificar o replace ou use o state
     } catch (err) {
       console.error('Erro ao buscar entregas:', err);
     } finally {
@@ -285,23 +292,30 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="glass-card p-5 rounded-3xl">
-          <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Meu Saldo</p>
-          <p className="text-xl font-black">R$ {parseFloat(driverProfile.saldo?.toString() || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+        <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
+          <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Saldo para Receber</p>
+          <p className="text-xl font-black text-white tracking-tighter">R$ {parseFloat(driverProfile.saldo?.toString() || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
           <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">Disponível para saque</p>
         </div>
-        <div className="glass-card p-5 rounded-3xl">
-          <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Ganhos Hoje</p>
-          <p className="text-xl font-black">R$ {historyDeliveries.reduce((acc, curr) => acc + parseFloat(curr.valor_entregador), 0).toFixed(2)}</p>
-          <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">{historyDeliveries.length} entregas</p>
+        <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
+          <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Ganhos Hoje (Total)</p>
+          <p className="text-xl font-black text-lime-500 tracking-tighter">R$ {
+            (data_hoje_only || []).reduce((acc: number, curr: any) => acc + parseFloat(curr.valor_entregador), 0).toFixed(2)
+          }</p>
+          <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">{(data_hoje_only || []).length} entregas hoje</p>
         </div>
       </div>
 
       {historyDeliveries.length > 0 && (
         <section className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Histórico Recente</h3>
-            <History size={14} className="text-gray-800" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Últimas 20 Entregas</h3>
+            <button
+              onClick={() => onViewChange?.('history')}
+              className="text-[9px] font-black text-gray-600 hover:text-orange-primary uppercase tracking-widest transition-colors flex items-center gap-1"
+            >
+              <History size={12} /> Ver Tudo
+            </button>
           </div>
           <div className="space-y-2">
             {historyDeliveries.map(delivery => (
