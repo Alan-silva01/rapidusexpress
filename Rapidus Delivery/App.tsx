@@ -169,7 +169,7 @@ const App: React.FC = () => {
       case 'profile':
         return <Profile profile={profile} onUpdate={() => fetchProfile(profile.id)} onLogout={handleLogout} />;
       case 'finance':
-        return <Finance />;
+        return <Finance profile={profile} />;
       case 'map':
         return <MapView profile={profile} gpsStatus={gpsStatus} />;
       case 'drivers':
