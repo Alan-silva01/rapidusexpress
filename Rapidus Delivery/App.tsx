@@ -165,7 +165,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return profile.funcao === 'admin' ? <AdminDashboard onViewChange={setCurrentView} profile={profile} /> : <DriverDashboard profile={profile} onViewChange={setCurrentView} />;
       case 'inbox':
-        return <DeliveriesInbox onAssignSuccess={setCurrentView} />;
+        return <DeliveriesInbox onAssignSuccess={setCurrentView} profile={profile} />;
       case 'profile':
         return <Profile profile={profile} onUpdate={() => fetchProfile(profile.id)} onLogout={handleLogout} />;
       case 'finance':

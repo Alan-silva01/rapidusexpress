@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Inbox, ChevronRight, UserPlus, MapPin, CreditCard, Clock, Loader2, CheckCircle } from 'lucide-react';
+import { Perfil } from '../types';
 
 interface PendingDelivery {
   data_hora: string;
@@ -12,9 +13,10 @@ interface PendingDelivery {
 
 interface DeliveriesInboxProps {
   onAssignSuccess?: (view: any) => void;
+  profile?: Perfil | null;
 }
 
-const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess }) => {
+const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, profile }) => {
   const [stores, setStores] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +96,6 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess }) =>
 
   const handleAssign = async (store: any, deliveryIndex: number, driver: any) => {
     const delivery = store.entregas[deliveryIndex];
-    // Verificar se o entregador ainda está disponível
     if (driver && !driver.disponivel) {
       alert('Este entregador ficou indisponível no momento. Por favor, escolha outro.');
       await fetchInboxData();
@@ -103,26 +104,48 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess }) =>
 
     setProcessing(true);
     try {
+      const effectiveDriverId = driver?.id || profile?.id || null;
+
       if ((delivery as any).isFromDB) {
-        // Se já está no banco (aguardando), usamos a nova RPC financeira
         const { error } = await supabase.rpc('atribuir_entrega_existente', {
           p_entrega_id: (delivery as any).id,
-          p_entregador_id: driver?.id || null,
+          p_entregador_id: effectiveDriverId,
           p_porcentagem_admin: driver?.porcentagem_lucro_admin || 20,
           p_valor_fixo_admin: driver?.valor_fixo_admin || 0
         });
         if (error) throw error;
       } else {
-        // Se ainda está no JSON, usamos a RPC que remove do JSON e cria no banco
         const { error } = await supabase.rpc('atribuir_entrega_do_json', {
           p_cliente_numero: store.numero_whatsapp,
           p_json_index: deliveryIndex,
-          p_entregador_id: driver?.id || null,
+          p_entregador_id: effectiveDriverId,
           p_porcentagem_admin: driver?.porcentagem_lucro_admin || 20,
           p_valor_fixo_admin: driver?.valor_fixo_admin || 0
         });
         if (error) throw error;
       }
+
+      // Auto-aceite para o Admin
+      if (!driver) {
+        let deliveryId = (delivery as any).id;
+        if (!deliveryId) {
+          const { data: newData } = await supabase
+            .from('entregas')
+            .select('id')
+            .eq('estabelecimento_id', store.id)
+            .eq('entregador_id', effectiveDriverId)
+            .eq('status', 'atribuida')
+            .order('criado_at', { ascending: false })
+            .limit(1)
+            .single();
+          deliveryId = newData?.id;
+        }
+
+        if (deliveryId) {
+          await supabase.from('entregas').update({ status: 'em_rota' }).eq('id', deliveryId);
+        }
+      }
+
       setAssigningPath(null);
       await fetchInboxData();
 
