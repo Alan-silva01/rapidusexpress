@@ -160,14 +160,28 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
   const formatObservation = (obs: any) => {
     if (!obs) return 'Sem observações';
     if (typeof obs === 'string') return obs.replace('Extraída do WhatsApp: ', '');
-    // Caso venha o novo formato JSON no futuro, mas por enquanto tratamos como string
     return JSON.stringify(obs);
   };
 
-  const formatAddress = (addr: any) => {
-    if (!addr) return 'Endereço não informado';
+  const formatAddress = (delivery: any) => {
+    const addr = delivery.endereco_cliente;
+    if (!addr) {
+      // Se não tem endereço mas tem observação, e a observação parece um endereço (tem números ou vírgulas?)
+      // Na dúvida, se não tem endereço, não inventamos, mas mostramos a observação com destaque
+      return 'Endereço não informado';
+    }
     if (Array.isArray(addr)) return addr.join(', ');
     return addr;
+  };
+
+  const formatClientName = (delivery: any) => {
+    if (delivery.nome_cliente) return delivery.nome_cliente;
+    if (delivery.observacao) {
+      const cleanObs = delivery.observacao.replace('Extraída do WhatsApp: ', '');
+      // Se a observação parece um nome (curta e sem muitos números)
+      if (cleanObs.length < 40) return cleanObs;
+    }
+    return 'N/A';
   };
 
   return (
@@ -241,7 +255,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
             ) : (
               <div className="space-y-3">
                 {activeDeliveries.map(task => {
-                  const info = getStatusInfo(task.status, task.estabelecimentos?.nome, task.nome_cliente || 'Cliente');
+                  const info = getStatusInfo(task.status, task.estabelecimentos?.nome, formatClientName(task));
                   const isExpanded = expandedId === task.id;
 
                   return (
@@ -263,8 +277,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                       <div className={`expandable-content ${isExpanded ? 'expanded' : ''}`}>
                         <div className="expandable-inner space-y-4">
                           <div className="bg-black/20 p-4 rounded-2xl text-[10px] text-gray-400 font-medium space-y-2 border border-white/5">
-                            <p><span className="text-gray-600 uppercase font-black tracking-widest text-[8px]">Coleta:</span> {formatAddress(task.estabelecimentos?.endereco)}</p>
-                            <p><span className="text-lime-500 uppercase font-black tracking-widest text-[8px]">Entrega:</span> {formatAddress(task.endereco_cliente)}</p>
+                            <p><span className="text-gray-600 uppercase font-black tracking-widest text-[8px]">Coleta:</span> {formatAddress({ ...task, endereco_cliente: task.estabelecimentos?.endereco })}</p>
+                            <p><span className="text-lime-500 uppercase font-black tracking-widest text-[8px]">Entrega:</span> {formatAddress(task)}</p>
                             {task.observacao && (
                               <p className="bg-orange-primary/5 p-2 rounded-lg mt-1 border border-orange-primary/10 italic text-gray-300">
                                 <span className="text-orange-primary uppercase font-black tracking-widest text-[8px] not-italic mr-1">Obs:</span>
@@ -354,11 +368,11 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                       <div className="grid grid-cols-1 gap-2 text-[9px] text-gray-500 font-bold uppercase tracking-widest">
                         <div>
                           <p className="text-gray-700 text-[7px] mb-0.5">Destinatário</p>
-                          <p className="text-gray-300">{delivery.nome_cliente || 'N/A'}</p>
+                          <p className="text-gray-300">{formatClientName(delivery)}</p>
                         </div>
                         <div>
                           <p className="text-gray-700 text-[7px] mb-0.5">Endereço de Entrega</p>
-                          <p className="text-gray-300 leading-relaxed">{formatAddress(delivery.endereco_cliente)}</p>
+                          <p className="text-gray-300 leading-relaxed">{formatAddress(delivery)}</p>
                         </div>
                         {delivery.observacao && (
                           <div>
@@ -414,11 +428,11 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                 <div className="space-y-4">
                   <div>
                     <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Destinatário</p>
-                    <p className="text-[14px] text-white font-black uppercase tracking-tight">{selectedDelivery.nome_cliente || 'N/A'}</p>
+                    <p className="text-[14px] text-white font-black uppercase tracking-tight">{formatClientName(selectedDelivery)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Endereço de Entrega</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery.endereco_cliente)}</p>
+                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery)}</p>
                   </div>
                   {selectedDelivery.observacao && (
                     <div>

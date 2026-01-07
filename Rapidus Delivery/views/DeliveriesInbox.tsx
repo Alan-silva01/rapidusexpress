@@ -52,21 +52,35 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess }) =>
       const storesWithDeliveries = (estData || []).map(store => {
         const jsonDeliveries = clientData?.find(c => c.numero === store.numero_whatsapp)?.entregas || [];
 
-        // Formatar entregas do banco (aguardando) para o mesmo formato do JSON para exibição uniforme
-        const dbDeliveries = (refusedData || [])
+        // Formatar entregas do banco (aguardando)
+        const formattedDbDeliveries = (refusedData || [])
           .filter(d => d.estabelecimento_id === store.id)
           .map(d => ({
-            id: d.id, // Guardar o ID real do banco
+            id: d.id,
             data_hora: d.data_entrega,
             valor_frete: d.valor_total.toString(),
-            nome_cliente: d.observacao?.replace('Extraída do WhatsApp: ', '') || 'Cliente',
-            endereco_cliente: [], // O endereço completo estaria no banco se tivéssemos colunas separadas
+            nome_cliente: d.nome_cliente || d.observacao?.replace('Extraída do WhatsApp: ', '') || 'Cliente',
+            endereco_cliente: Array.isArray(d.endereco_cliente) ? d.endereco_cliente : [d.endereco_cliente].filter(Boolean),
+            observacao: d.observacao,
             isFromDB: true
           }));
 
+        // Formatar entregas do JSON
+        const formattedJsonDeliveries = jsonDeliveries.map((d: any) => {
+          const addr = d.endereco || {};
+          const addrArray = [addr.rua, addr.numero, addr.bairro, addr.cidade].filter(Boolean);
+
+          return {
+            ...d,
+            nome_cliente: d.nome || d.nome_cliente || d.observacao?.replace('Extraída do WhatsApp: ', '') || 'Cliente',
+            endereco_cliente: addrArray.length > 0 ? addrArray : [d.observacao?.replace('Extraída do WhatsApp: ', '')].filter(Boolean),
+            isFromDB: false
+          };
+        });
+
         return {
           ...store,
-          entregas: [...jsonDeliveries, ...dbDeliveries]
+          entregas: [...formattedJsonDeliveries, ...formattedDbDeliveries]
         };
       });
 
