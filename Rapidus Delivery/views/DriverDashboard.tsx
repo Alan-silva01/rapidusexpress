@@ -136,12 +136,25 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile }) => {
     }
   };
 
-  const getStatusInfo = (status: string) => {
+  const getStatusInfo = (status: string, estabelecimentoNome: string = 'Estabelecimento', clienteNome: string = 'Cliente') => {
     switch (status) {
-      case 'em_rota': return { label: 'Em Rota de Busca', sub: 'Indo até o estabelecimento', icon: <Bike size={18} /> };
-      case 'coletada': return { label: 'Pedido Coletado', sub: 'Em rota de entrega ao cliente', icon: <Navigation size={18} /> };
+      case 'em_rota': return { label: `Vá até a ${estabelecimentoNome}`, sub: 'Indo coletar o pedido', icon: <Bike size={18} /> };
+      case 'coletada': return { label: `Entregar para ${clienteNome}`, sub: 'Pedido em mãos, vá ao cliente', icon: <Navigation size={18} /> };
       default: return { label: 'Em andamento', sub: 'Atualize o status', icon: <Activity size={18} /> };
     }
+  };
+
+  const formatObservation = (obs: any) => {
+    if (!obs) return 'Sem observações';
+    if (typeof obs === 'string') return obs.replace('Extraída do WhatsApp: ', '');
+    // Caso venha o novo formato JSON no futuro, mas por enquanto tratamos como string
+    return JSON.stringify(obs);
+  };
+
+  const formatAddress = (addr: any) => {
+    if (!addr) return 'Endereço não informado';
+    if (Array.isArray(addr)) return addr.join(', ');
+    return addr;
   };
 
   return (
@@ -215,38 +228,44 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile }) => {
             ) : (
               <div className="space-y-3">
                 {activeDeliveries.map(task => {
-                  const info = getStatusInfo(task.status);
+                  const info = getStatusInfo(task.status, task.estabelecimentos?.nome, task.nome_cliente || 'Cliente');
                   return (
                     <div key={task.id} className="glass-card p-5 rounded-3xl border-white/5 relative overflow-hidden">
                       <div onClick={() => setSelectedDelivery(task)} className="flex items-center gap-4 mb-5 cursor-pointer">
                         <div className="w-10 h-10 bg-orange-primary/10 rounded-xl flex items-center justify-center text-orange-primary">
                           {info.icon}
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <h4 className="text-sm font-black tracking-tight text-white">{task.estabelecimentos?.nome}</h4>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-orange-primary">{info.label}</p>
-                          <p className="text-[8px] text-gray-500 mt-1 uppercase font-bold">{info.sub}</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-orange-primary mt-0.5">{info.label}</p>
+                          <p className="text-[8px] text-gray-500 mt-1 uppercase font-bold italic">{info.sub}</p>
                         </div>
-                        <div className="ml-auto text-right">
+                        <div className="text-right">
                           <p className="text-sm font-black text-white">R$ {parseFloat(task.valor_entregador).toFixed(2)}</p>
-                          <span className="text-[8px] font-black text-orange-primary uppercase tracking-widest">Abrir Detalhes</span>
+                          <span className="text-[8px] font-black text-orange-primary uppercase tracking-widest">Detalhes</span>
                         </div>
                       </div>
 
-                      <div className="bg-black/20 p-3 rounded-2xl mb-4 text-[9px] text-gray-400 font-medium">
-                        <p className="mb-1"><span className="text-gray-600 uppercase font-black tracking-widest">Loja:</span> {task.estabelecimentos?.endereco || 'Endereço da loja'}</p>
-                        <p><span className="text-gray-600 uppercase font-black tracking-widest">Entrega:</span> {task.observacao.replace('Extraída do WhatsApp: ', '')}</p>
+                      <div className="bg-black/20 p-4 rounded-2xl mb-4 text-[10px] text-gray-400 font-medium space-y-2 border border-white/5">
+                        <p><span className="text-gray-600 uppercase font-black tracking-widest text-[8px]">Coleta:</span> {formatAddress(task.estabelecimentos?.endereco)}</p>
+                        <p><span className="text-lime-500 uppercase font-black tracking-widest text-[8px]">Entrega:</span> {formatAddress(task.endereco_cliente)}</p>
+                        {task.observacao && (
+                          <p className="bg-orange-primary/5 p-2 rounded-lg mt-1 border border-orange-primary/10 italic text-gray-300">
+                            <span className="text-orange-primary uppercase font-black tracking-widest text-[8px] not-italic mr-1">Obs:</span>
+                            {formatObservation(task.observacao)}
+                          </p>
+                        )}
                       </div>
 
                       {task.status === 'em_rota' && (
                         <button onClick={() => handleAction('collect', task.id)} className="w-full h-12 bg-orange-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-primary/20">
-                          {processing ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />} Confirmei a Coleta na Loja
+                          {processing ? <Loader2 className="animate-spin" size={14} /> : <PackageCheck size={14} />} Confirmar Coleta na Loja
                         </button>
                       )}
 
                       {task.status === 'coletada' && (
                         <button onClick={() => handleAction('finish', task.id)} className="w-full h-12 bg-lime-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-lime-500/20">
-                          {processing ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />} Finalizar Entrega ao Cliente
+                          {processing ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />} Entrega Concluída
                         </button>
                       )}
 
@@ -342,7 +361,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile }) => {
                 <div className="space-y-4">
                   <div>
                     <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Endereço da Loja</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{selectedDelivery.estabelecimentos?.endereco || 'Endereço não informado'}</p>
+                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery.estabelecimentos?.endereco)}</p>
                   </div>
                 </div>
               </div>
@@ -351,9 +370,15 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile }) => {
                 <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em] mb-4">📍 Dados da Entrega (Cliente)</h3>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Informações do Pedido</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed whitespace-pre-wrap">
-                      {selectedDelivery.observacao.replace('Extraída do WhatsApp: ', '')}
+                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Destinatário</p>
+                    <p className="text-[12px] text-white font-black uppercase tracking-tight mb-2">{selectedDelivery.nome_cliente || 'Cliente'}</p>
+
+                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Endereço de Entrega</p>
+                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed mb-3">{formatAddress(selectedDelivery.endereco_cliente)}</p>
+
+                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Observações</p>
+                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed whitespace-pre-wrap italic">
+                      {formatObservation(selectedDelivery.observacao)}
                     </p>
                   </div>
                 </div>
@@ -370,11 +395,11 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile }) => {
                 </div>
               ) : selectedDelivery.status === 'em_rota' ? (
                 <button onClick={() => { handleAction('collect', selectedDelivery.id); setSelectedDelivery(null); }} className="w-full h-16 bg-orange-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-orange-primary/20 flex items-center justify-center gap-2">
-                  <CheckCircle2 size={18} /> Confirmar Coleta na Loja
+                  <PackageCheck size={18} /> Confirmar Coleta na Loja
                 </button>
               ) : selectedDelivery.status === 'coletada' ? (
                 <button onClick={() => { handleAction('finish', selectedDelivery.id); setSelectedDelivery(null); }} className="w-full h-16 bg-lime-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-lime-500/20 flex items-center justify-center gap-2">
-                  <CheckCircle2 size={18} /> Finalizar Entrega ao Cliente
+                  <CheckCircle2 size={18} /> Entrega Concluída
                 </button>
               ) : null}
 

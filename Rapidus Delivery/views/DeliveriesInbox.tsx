@@ -10,7 +10,11 @@ interface PendingDelivery {
   endereco_cliente: string[];
 }
 
-const DeliveriesInbox: React.FC = () => {
+interface DeliveriesInboxProps {
+  onAssignSuccess?: (view: any) => void;
+}
+
+const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess }) => {
   const [stores, setStores] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,6 +118,9 @@ const DeliveriesInbox: React.FC = () => {
         alert(`Entrega enviada para ${driver.nome}. Ele será notificado imediatamente.`);
       } else {
         alert(`Entrega assumida por você.`);
+        if (onAssignSuccess) {
+          onAssignSuccess('self_delivery');
+        }
       }
     } catch (err: any) {
       alert('Erro ao atribuir: ' + err.message);
@@ -177,8 +184,8 @@ const DeliveriesInbox: React.FC = () => {
                       <button
                         onClick={() => setAssigningPath(assigningPath?.storeIndex === sIdx && assigningPath?.deliveryIndex === dIdx ? null : { storeIndex: sIdx, deliveryIndex: dIdx })}
                         className={`w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${assigningPath?.storeIndex === sIdx && assigningPath?.deliveryIndex === dIdx
-                            ? 'bg-white/5 text-white border border-white/10'
-                            : 'bg-white/[0.03] border border-orange-primary/20 text-orange-primary hover:bg-orange-primary/5'
+                          ? 'bg-white/5 text-white border border-white/10'
+                          : 'bg-white/[0.03] border border-orange-primary/20 text-orange-primary hover:bg-orange-primary/5'
                           }`}
                       >
                         <UserPlus size={16} />

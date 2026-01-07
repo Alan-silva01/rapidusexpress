@@ -15,7 +15,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<Perfil | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'inbox' | 'profile' | 'finance' | 'map' | 'drivers' | 'new_client'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'inbox' | 'profile' | 'finance' | 'map' | 'drivers' | 'new_client' | 'self_delivery'>('dashboard');
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'searching' | 'active' | 'denied' | 'error'>('idle');
 
   useEffect(() => {
@@ -160,7 +160,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return profile.funcao === 'admin' ? <AdminDashboard onViewChange={setCurrentView} profile={profile} /> : <DriverDashboard profile={profile} />;
       case 'inbox':
-        return <DeliveriesInbox />;
+        return <DeliveriesInbox onAssignSuccess={setCurrentView} />;
       case 'profile':
         return <Profile profile={profile} onUpdate={() => fetchProfile(profile.id)} onLogout={handleLogout} />;
       case 'finance':
@@ -171,6 +171,9 @@ const App: React.FC = () => {
         return <DriverManagement />;
       case 'new_client':
         return <AdminDashboard onViewChange={setCurrentView} profile={profile} showNewClientForm={true} />;
+      case 'self_delivery':
+        // No modo 'self_delivery', o Admin vê a mesma interface do entregador
+        return <DriverDashboard profile={profile} />;
       default:
         return <AdminDashboard onViewChange={setCurrentView} profile={profile} />;
     }
