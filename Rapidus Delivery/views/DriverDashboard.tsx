@@ -410,29 +410,37 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
 
             <div className="space-y-6">
               <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
-                <h3 className="text-[10px] font-black text-orange-primary uppercase tracking-[0.2em] mb-4">🏠 Dados da Retirada (Loja)</h3>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Endereço da Loja</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery.estabelecimentos?.endereco)}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
                 <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em] mb-4">📍 Dados da Entrega (Cliente)</h3>
                 <div className="space-y-4">
                   <div>
                     <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Destinatário</p>
-                    <p className="text-[12px] text-white font-black uppercase tracking-tight mb-2">{selectedDelivery.nome_cliente || 'Cliente'}</p>
-
+                    <p className="text-[14px] text-white font-black uppercase tracking-tight">{selectedDelivery.nome_cliente || 'N/A'}</p>
+                  </div>
+                  <div>
                     <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Endereço de Entrega</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed mb-3">{formatAddress(selectedDelivery.endereco_cliente)}</p>
+                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery.endereco_cliente)}</p>
+                  </div>
+                  {selectedDelivery.observacao && (
+                    <div>
+                      <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">📝 Observações</p>
+                      <p className="text-[11px] text-orange-primary/80 font-medium leading-relaxed italic">
+                        {formatObservation(selectedDelivery.observacao)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Observações</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed whitespace-pre-wrap italic">
-                      {formatObservation(selectedDelivery.observacao)}
-                    </p>
+              <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
+                <h3 className="text-[10px] font-black text-orange-primary uppercase tracking-[0.2em] mb-4">🏠 Dados da Retirada (Loja)</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Loja / Estabelecimento</p>
+                    <p className="text-[12px] text-white font-black uppercase">{selectedDelivery.estabelecimentos?.nome || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Endereço de Coleta</p>
+                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery.estabelecimentos?.endereco)}</p>
                   </div>
                 </div>
               </div>
