@@ -176,9 +176,9 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                     <Wallet size={24} />
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Saldo Total em Caixa</p>
+                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Total de Caixa (Dinheiro Real)</p>
                     <p className="text-3xl font-black text-white tracking-tighter">R$ {(stats.recebido - stats.pago).toFixed(2)}</p>
-                    <p className="text-[8px] text-gray-700 font-bold uppercase mt-1">Dinheiro em mãos (Recebido - Pago)</p>
+                    <p className="text-[8px] text-gray-700 font-bold uppercase mt-1">Saldo em mãos hoje</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-5">
@@ -193,16 +193,19 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-2">
-                <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5">
-                  <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Ganhos em Comissões</p>
-                  <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.comissoes.toFixed(2)}</p>
-                  <p className="text-[7px] text-gray-800 uppercase font-black">Das entregas de terceiros</p>
-                </div>
-                <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 text-right">
-                  <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Suas Próprias Entregas</p>
-                  <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.proprio.toFixed(2)}</p>
-                  <p className="text-[7px] text-gray-800 uppercase font-black">Seu ganho 100% (Sem taxas)</p>
+              <div className="py-2">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-700 px-1 mb-3">Relatório de Ganhos (Lucro Estimado)</h3>
+                <div className="grid grid-cols-2 gap-3 mb-2">
+                  <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5">
+                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Ganhos em Comissões</p>
+                    <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.comissoes.toFixed(2)}</p>
+                    <p className="text-[7px] text-gray-800 uppercase font-black">Das entregas de terceiros</p>
+                  </div>
+                  <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 text-right">
+                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Suas Próprias Entregas</p>
+                    <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.proprio.toFixed(2)}</p>
+                    <p className="text-[7px] text-gray-800 uppercase font-black">Seu ganho 100% (Sem taxas)</p>
+                  </div>
                 </div>
               </div>
 
