@@ -258,6 +258,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
                 driver={activity.perfis?.nome || 'Pendente'}
                 time={formatTime(activity.criado_at)}
                 color={getStatusColor(activity.status)}
+                address={activity.endereco_cliente}
               />
             ))
           )}
@@ -299,30 +300,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
 
             <div className="space-y-6">
               <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
-                <h3 className="text-[10px] font-black text-orange-primary uppercase tracking-[0.2em] mb-4">🏪 Dados do Estabelecimento</h3>
+                <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em] mb-4">📍 Detalhes do Destino</h3>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-1">Cliente / Destinatário</p>
+                    <p className="text-sm font-black text-white uppercase tracking-tight">{selectedActivity.nome_cliente || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-1">Endereço de Entrega</p>
+                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{selectedActivity.endereco_cliente || 'Não informado'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
+                <h3 className="text-[10px] font-black text-orange-primary uppercase tracking-[0.2em] mb-4">🏪 Dados da Coleta</h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Endereço de Coleta</p>
+                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Estabelecimento</p>
+                    <p className="text-[11px] text-white font-bold">{selectedActivity.estabelecimentos?.nome || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Endereço da Loja</p>
                     <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{selectedActivity.estabelecimentos?.endereco || 'Endereço não informado'}</p>
                   </div>
                 </div>
               </div>
 
               <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
-                <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em] mb-4">📍 Detalhes da Entrega</h3>
+                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">📝 Informações Adicionais</h3>
                 <div className="space-y-3">
                   <div>
                     <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Observações / WhatsApp</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed whitespace-pre-wrap">{selectedActivity.observacao}</p>
+                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed whitespace-pre-wrap italic">
+                      {selectedActivity.observacao?.replace('Extraída do WhatsApp: ', '') || 'Sem observações'}
+                    </p>
                   </div>
-                  <div className="pt-2 border-t border-white/5 flex justify-between">
+                  <div className="pt-3 border-t border-white/5 flex justify-between items-center">
                     <div>
                       <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Entregador</p>
                       <p className="text-[11px] text-gray-300 font-medium">{selectedActivity.perfis?.nome || 'Não Atribuído'}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Ganhos Admin</p>
-                      <p className="text-[11px] text-lime-500 font-bold">R$ {parseFloat(selectedActivity.lucro_admin).toFixed(2)}</p>
+                      <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Lucro Admin</p>
+                      <p className="text-[11px] text-lime-500 font-bold">R$ {parseFloat(selectedActivity.lucro_admin || '0').toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -361,21 +382,24 @@ const QuickAction = ({ icon, label, active, onClick }: any) => (
   </button>
 );
 
-const ActivityItem = ({ store, status, time, color, driver, onClick }: any) => (
+const ActivityItem = ({ store, status, time, color, driver, address, onClick }: any) => (
   <div onClick={onClick} className="glass-card p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-white/10 transition-colors">
-    <div className="flex items-center gap-4">
-      <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40"></div>
-      <div>
-        <h4 className="text-xs font-black tracking-tight">{store}</h4>
-        <div className="flex items-center gap-2 mt-0.5">
-          <p className={`text-[9px] font-black uppercase tracking-widest ${color}`}>{status}</p>
-          <span className="text-[14px] text-gray-800">•</span>
-          <p className="text-[9px] font-bold text-gray-600 uppercase tracking-tighter">{driver}</p>
+    <div className="flex items-center gap-4 flex-1">
+      <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40 shrink-0"></div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-black tracking-tight truncate">{store}</h4>
+          <span className="text-[9px] font-bold text-gray-700 shrink-0 ml-2">{time}</span>
+        </div>
+        <p className="text-[10px] text-gray-500 font-medium truncate mt-0.5 leading-tight">{address || 'Sem endereço'}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className={`text-[8px] font-black uppercase tracking-widest ${color}`}>{status}</p>
+          <span className="text-[10px] text-gray-800 shrink-0">•</span>
+          <p className="text-[8px] font-bold text-gray-600 uppercase tracking-tighter truncate">{driver}</p>
         </div>
       </div>
     </div>
-    <div className="flex items-center gap-3">
-      <span className="text-[10px] font-bold text-gray-700">{time}</span>
+    <div className="ml-3 shrink-0">
       <ChevronRight size={14} className="text-gray-800" />
     </div>
   </div>
