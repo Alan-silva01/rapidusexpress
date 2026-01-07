@@ -1,0 +1,10 @@
+
+{
+  "name": "Rapidus Delivery",
+  "description": "Sistema completo para gestão de entregas e motoboys com painel administrativo e visão do entregador.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
