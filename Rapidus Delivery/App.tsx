@@ -160,7 +160,7 @@ const App: React.FC = () => {
     );
     switch (currentView) {
       case 'dashboard':
-        return profile.funcao === 'admin' ? <AdminDashboard onViewChange={setCurrentView} profile={profile} /> : <DriverDashboard profile={profile} />;
+        return profile.funcao === 'admin' ? <AdminDashboard onViewChange={setCurrentView} profile={profile} /> : <DriverDashboard profile={profile} onViewChange={setCurrentView} />;
       case 'inbox':
         return <DeliveriesInbox onAssignSuccess={setCurrentView} />;
       case 'profile':
@@ -175,7 +175,9 @@ const App: React.FC = () => {
         return <AdminDashboard onViewChange={setCurrentView} profile={profile} showNewClientForm={true} />;
       case 'self_delivery':
         // No modo 'self_delivery', o Admin vê a mesma interface do entregador
-        return <DriverDashboard profile={profile} />;
+        return <DriverDashboard profile={profile} onViewChange={setCurrentView} />;
+      case 'history':
+        return <DeliveriesHistory profileId={profile.id} onBack={() => setCurrentView('dashboard')} />;
       default:
         return <AdminDashboard onViewChange={setCurrentView} profile={profile} />;
     }

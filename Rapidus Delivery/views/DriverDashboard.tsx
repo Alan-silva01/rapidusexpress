@@ -79,7 +79,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       const hojeOnly = finalizadas.filter(d => d.criado_at.startsWith(hoje));
 
       setHistoryDeliveries(finalizadas.slice(0, 20));
-      (window as any).data_hoje_only = hojeOnly; // Gambiarra temporária para simplificar o replace ou use o state
+      setTodayDeliveries(hojeOnly);
     } catch (err) {
       console.error('Erro ao buscar entregas:', err);
     } finally {
@@ -300,9 +300,9 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
         <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
           <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Ganhos Hoje (Total)</p>
           <p className="text-xl font-black text-lime-500 tracking-tighter">R$ {
-            (data_hoje_only || []).reduce((acc: number, curr: any) => acc + parseFloat(curr.valor_entregador), 0).toFixed(2)
+            todayDeliveries.reduce((acc, curr) => acc + parseFloat(curr.valor_entregador), 0).toFixed(2)
           }</p>
-          <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">{(data_hoje_only || []).length} entregas hoje</p>
+          <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">{todayDeliveries.length} entregas hoje</p>
         </div>
       </div>
 
