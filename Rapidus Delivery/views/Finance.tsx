@@ -18,6 +18,10 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
     recebido: 0,
     pago: 0
   });
+  const [globalTotals, setGlobalTotals] = useState({
+    receivables: 0,
+    payables: 0
+  });
 
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -84,8 +88,12 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
         return { ...d, periodPaid, periodDeliveries };
       });
 
+      const globalReceivables = (stores || []).reduce((acc, s) => acc + (s.saldo_faltante || 0), 0);
+      const globalPayables = (drivers || []).reduce((acc, d) => acc + (d.saldo_a_pagar || 0), 0);
+
       setResumoStores(storesEnriched);
       setResumoDrivers(driversEnriched);
+      setGlobalTotals({ receivables: globalReceivables, payables: globalPayables });
       setTransactions(txs || []);
     } catch (err) {
       console.error(err);
@@ -175,13 +183,24 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                 </div>
                 <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-5">
                   <div>
-                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Comissões Recebidas</p>
-                    <p className="text-sm font-black text-lime-500 tracking-tighter">R$ {stats.comissoes.toFixed(2)}</p>
+                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Total a Receber (Lojas)</p>
+                    <p className="text-sm font-black text-lime-500 tracking-tighter">R$ {globalTotals.receivables.toFixed(2)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Fez em Entregas Próprias</p>
-                    <p className="text-sm font-black text-orange-primary tracking-tighter">R$ {stats.proprio.toFixed(2)}</p>
+                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Total a Pagar (Motoboys)</p>
+                    <p className="text-sm font-black text-orange-primary tracking-tighter">R$ {globalTotals.payables.toFixed(2)}</p>
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5">
+                  <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Comissões Acumuladas</p>
+                  <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.comissoes.toFixed(2)}</p>
+                </div>
+                <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 text-right">
+                  <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Suas Entregas (Admin)</p>
+                  <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.proprio.toFixed(2)}</p>
                 </div>
               </div>
 
@@ -269,15 +288,15 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Histórico de Transações</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Fluxo de Pagamentos Realizados</h3>
               <div className="space-y-2">
-                {transactions.length === 0 ? (
+                {transactions.filter(t => ['recebimento_estabelecimento', 'pagamento_entregador'].includes(t.tipo)).length === 0 ? (
                   <div className="glass-card p-10 text-center border-dashed border-white/5">
                     <History size={24} className="mx-auto mb-2 text-gray-800" />
-                    <p className="text-[8px] text-gray-700 font-black uppercase tracking-widest">Nenhuma transação encontrada</p>
+                    <p className="text-[8px] text-gray-700 font-black uppercase tracking-widest">Nenhuma movimentação no período</p>
                   </div>
                 ) : (
-                  transactions.slice(0, 50).map(tx => (
+                  transactions.filter(t => ['recebimento_estabelecimento', 'pagamento_entregador'].includes(t.tipo)).slice(0, 50).map(tx => (
                     <TransactionRow
                       key={tx.id}
                       tipo={tx.tipo}
