@@ -218,12 +218,12 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
-                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Efetuado (Motoboys)</p>
-                      <p className="text-sm font-bold text-red-500 tracking-tighter">- R$ {stats.pago.toFixed(2)}</p>
+                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">PAGOS ENTREGADORES</p>
+                      <p className="text-sm font-bold text-white tracking-tighter">R$ {stats.pago.toFixed(2)}</p>
                     </div>
                     <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
-                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Recebido (Lojas)</p>
-                      <p className="text-sm font-bold text-lime-500 tracking-tighter">+ R$ {stats.recebido.toFixed(2)}</p>
+                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">RECEBIDO (LOJAS)</p>
+                      <p className="text-sm font-bold text-lime-500 tracking-tighter">R$ {stats.recebido.toFixed(2)}</p>
                     </div>
                   </div>
 
@@ -232,9 +232,9 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                       <p className="text-[8px] font-black text-lime-600 uppercase mb-1 tracking-widest">Lojas Pendentes</p>
                       <p className="text-sm font-black text-white tracking-tighter text-lime-500">R$ {globalTotals.receivables.toFixed(2)}</p>
                     </div>
-                    <div className="glass-card p-5 rounded-3xl border-red-500/10 bg-red-500/[0.02]">
-                      <p className="text-[8px] font-black text-red-600 uppercase mb-1 tracking-widest">Motoboys Pendentes</p>
-                      <p className="text-sm font-black text-white tracking-tighter text-red-500">R$ {globalTotals.payables.toFixed(2)}</p>
+                    <div className="glass-card p-5 rounded-3xl border-orange-primary/10 bg-orange-primary/[0.02]">
+                      <p className="text-[8px] font-black text-orange-primary uppercase mb-1 tracking-widest">Entregadores Pendentes</p>
+                      <p className="text-sm font-black text-white tracking-tighter text-orange-primary">R$ {globalTotals.payables.toFixed(2)}</p>
                     </div>
                   </div>
                 </>
@@ -447,9 +447,20 @@ const FinanceRow = ({ title, subtitle, value, orange, onClick, periodLabel, peri
   </div>
 );
 
+const StatCard = ({ label, value, color, subValue }: { label: string; value: string; color: string; subValue?: string }) => (
+  <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
+    <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">{label}</p>
+    <p className={`text-sm font-bold tracking-tighter ${color}`}>{value}</p>
+    {subValue && <p className="text-[7px] font-black text-gray-800 uppercase mt-1">{subValue}</p>}
+  </div>
+);
+
 const TransactionRow = ({ entidade, valor, tipo, data, metodo, obs, isAdmin }: any) => {
   const isGain = tipo === 'recebimento_estabelecimento';
   const isVirtual = tipo === 'ganho_entrega';
+
+  // Limpar observação para não mostrar IDs longos (UUID)
+  const cleanObs = obs?.includes('ID:') ? obs.split('(ID:')[0].trim() : obs;
 
   return (
     <div className={`glass-card p-4 rounded-3xl flex items-baseline justify-between border-white/[0.03] ${isVirtual ? 'bg-white/[0.01] opacity-60' : 'bg-white/[0.01]'}`}>
@@ -460,7 +471,7 @@ const TransactionRow = ({ entidade, valor, tipo, data, metodo, obs, isAdmin }: a
           <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest leading-none mt-1">
             {new Date(data).toLocaleDateString('pt-BR')} • {isVirtual ? 'Saldo App' : metodo}
           </p>
-          {obs && <p className="text-[9px] text-gray-500 italic mt-2 border-l border-white/5 pl-2">"{obs}"</p>}
+          {cleanObs && <p className="text-[9px] text-gray-500 italic mt-2 border-l border-white/5 pl-2">"{cleanObs}"</p>}
         </div>
       </div>
       <div className="text-right">
