@@ -84,8 +84,8 @@ const NewClientForm: React.FC<NewClientFormProps> = ({ onClose, onSuccess }) => 
             const { error } = await supabase.from('clientes').insert([
                 {
                     numero: whatsappFormatted,
-                    dados: JSON.stringify(dadosObjeto),
-                    entregas: "[]"
+                    dados: dadosObjeto,  // Passa como objeto JSONB, não stringificado
+                    entregas: []         // Array vazio, não string
                 }
             ]);
 
