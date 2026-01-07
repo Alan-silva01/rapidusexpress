@@ -95,8 +95,8 @@ const NewClientForm: React.FC<NewClientFormProps> = ({ onClose, onSuccess }) => 
     };
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-end justify-center bg-black/90 backdrop-blur-md animate-fade" onClick={onClose}>
-            <div className="w-full max-w-xl bg-zinc-950 rounded-t-[3rem] border-t border-white/5 p-8 pb-12 overflow-y-auto max-h-[92vh]" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade" onClick={onClose}>
+            <div className="w-full max-w-xl bg-zinc-950 rounded-[3rem] border border-white/5 p-8 pb-12 overflow-y-auto max-h-[92vh] shadow-2xl" onClick={e => e.stopPropagation()}>
                 <div className="w-12 h-1.5 bg-zinc-900 rounded-full mx-auto mb-8"></div>
 
                 <div className="flex justify-between items-center mb-10">

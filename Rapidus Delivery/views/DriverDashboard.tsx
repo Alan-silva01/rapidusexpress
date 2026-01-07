@@ -424,8 +424,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       )}
 
       {selectedDelivery && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fade" onClick={() => setSelectedDelivery(null)}>
-          <div className="w-full max-w-xl bg-[#0A0A0A] rounded-t-[3rem] border-t border-white/5 p-8 pb-12 overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade" onClick={() => setSelectedDelivery(null)}>
+          <div className="w-full max-w-xl bg-[#0A0A0A] rounded-[3rem] border border-white/5 p-8 pb-12 overflow-y-auto max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="w-12 h-1.5 bg-gray-900 rounded-full mx-auto mb-8"></div>
 
             <div className="flex justify-between items-start mb-8">
