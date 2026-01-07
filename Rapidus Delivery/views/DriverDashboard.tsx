@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Perfil } from '../types';
-import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History } from 'lucide-react';
+import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History, Phone, Clock } from 'lucide-react';
 
 interface DriverDashboardProps {
   profile: Perfil;
@@ -279,6 +279,18 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                           <div className="bg-black/20 p-4 rounded-2xl text-[10px] text-gray-400 font-medium space-y-2 border border-white/5">
                             <p><span className="text-gray-600 uppercase font-black tracking-widest text-[8px]">Coleta:</span> {formatAddress({ ...task, endereco_cliente: task.estabelecimentos?.endereco })}</p>
                             <p><span className="text-lime-500 uppercase font-black tracking-widest text-[8px]">Entrega:</span> {formatAddress(task)}</p>
+                            {task.telefone_cliente && (
+                              <p className="flex items-center gap-2">
+                                <span className="text-gray-600 uppercase font-black tracking-widest text-[8px]">Telefone:</span>
+                                <a
+                                  href={`tel:${task.telefone_cliente.replace(/\D/g, '')}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-lime-500 font-bold flex items-center gap-1 hover:text-lime-400 transition-colors"
+                                >
+                                  <Phone size={10} /> {task.telefone_cliente}
+                                </a>
+                              </p>
+                            )}
                             {task.observacao && (
                               <p className="bg-orange-primary/5 p-2 rounded-lg mt-1 border border-orange-primary/10 italic text-gray-300">
                                 <span className="text-orange-primary uppercase font-black tracking-widest text-[8px] not-italic mr-1">Obs:</span>
@@ -426,9 +438,22 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
               <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
                 <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em] mb-4">📍 Dados da Entrega (Cliente)</h3>
                 <div className="space-y-4">
-                  <div>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Destinatário</p>
-                    <p className="text-[14px] text-white font-black uppercase tracking-tight">{formatClientName(selectedDelivery)}</p>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Destinatário</p>
+                      <p className="text-[14px] text-white font-black uppercase tracking-tight">{formatClientName(selectedDelivery)}</p>
+                    </div>
+                    {selectedDelivery.telefone_cliente && (
+                      <div className="text-right">
+                        <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Contato</p>
+                        <a
+                          href={`tel:${selectedDelivery.telefone_cliente.replace(/\D/g, '')}`}
+                          className="text-[11px] text-lime-500 font-black flex items-center gap-1 justify-end hover:text-lime-400"
+                        >
+                          <Phone size={12} /> {selectedDelivery.telefone_cliente}
+                        </a>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Endereço de Entrega</p>

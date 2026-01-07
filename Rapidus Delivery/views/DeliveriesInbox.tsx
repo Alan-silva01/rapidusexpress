@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { Inbox, ChevronRight, UserPlus, MapPin, CreditCard, Clock, Loader2, CheckCircle } from 'lucide-react';
+import { Inbox, ChevronRight, UserPlus, MapPin, CreditCard, Clock, Loader2, CheckCircle, Phone } from 'lucide-react';
 import { Perfil } from '../types';
 
 interface PendingDelivery {
   data_hora: string;
   valor_frete: string;
   nome_cliente: string;
+  telefone_cliente?: string;
   endereco_cliente: string[];
 }
 
@@ -62,6 +63,7 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
             data_hora: d.data_entrega,
             valor_frete: d.valor_total.toString(),
             nome_cliente: d.nome_cliente || d.observacao?.replace('Extraída do WhatsApp: ', '') || 'Cliente',
+            telefone_cliente: d.telefone_cliente,
             endereco_cliente: Array.isArray(d.endereco_cliente) ? d.endereco_cliente : [d.endereco_cliente].filter(Boolean),
             isFromDB: true
           }));
@@ -91,6 +93,7 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
           return {
             ...d,
             nome_cliente: d.nome_cliente || d.nome || (obs.length < 40 ? obs.replace('Extraída do WhatsApp: ', '') : 'Cliente'),
+            telefone_cliente: d.telefone_cliente || d.telefone,
             endereco_cliente: finalAddress.length > 0 ? finalAddress : ['N/A'],
             isFromDB: false
           };
@@ -215,9 +218,20 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
                           </div>
                           <div>
                             <h4 className="text-sm font-black tracking-tight">{delivery.nome_cliente || 'Cliente'}</h4>
-                            <p className="text-[10px] text-gray-600 font-black uppercase flex items-center gap-1 tracking-widest">
-                              <Clock size={10} /> {new Date(delivery.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
+                            <div className="flex items-center gap-3">
+                              <p className="text-[10px] text-gray-600 font-black uppercase flex items-center gap-1 tracking-widest">
+                                <Clock size={10} /> {new Date(delivery.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                              {delivery.telefone_cliente && (
+                                <a
+                                  href={`tel:${delivery.telefone_cliente.replace(/\D/g, '')}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-[10px] text-lime-500 font-black uppercase flex items-center gap-1 tracking-widest hover:text-lime-400 transition-colors"
+                                >
+                                  <Phone size={10} /> {delivery.telefone_cliente}
+                                </a>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">
