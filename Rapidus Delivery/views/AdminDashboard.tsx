@@ -111,6 +111,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
     return `${Math.floor(hours / 24)}d`;
   };
 
+  const formatAddress = (delivery: any) => {
+    const addr = delivery.endereco_cliente;
+    if (!addr || (Array.isArray(addr) && addr.length === 0)) {
+      if (delivery.observacao) {
+        const cleanObs = delivery.observacao.replace('Extraída do WhatsApp: ', '');
+        if (cleanObs.includes('Rua') || cleanObs.includes('Bairro') || cleanObs.includes(',')) return cleanObs;
+      }
+      return 'Não informado';
+    }
+    if (Array.isArray(addr)) return addr.join(', ');
+    return addr;
+  };
+
+  const formatClientName = (delivery: any) => {
+    if (delivery.nome_cliente) return delivery.nome_cliente;
+    if (delivery.observacao) {
+      const cleanObs = delivery.observacao.replace('Extraída do WhatsApp: ', '');
+      if (cleanObs.length < 40 && !cleanObs.includes('Rua')) return cleanObs;
+    }
+    return 'N/A';
+  };
+
   return (
     <div className="space-y-6 animate-fade">
       {/* Ultra Clean Header */}
@@ -258,7 +280,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
                 driver={activity.perfis?.nome || 'Pendente'}
                 time={formatTime(activity.criado_at)}
                 color={getStatusColor(activity.status)}
-                address={activity.endereco_cliente}
+                address={formatAddress(activity)}
               />
             ))
           )}
@@ -304,11 +326,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
                 <div className="space-y-4">
                   <div>
                     <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-1">Cliente / Destinatário</p>
-                    <p className="text-sm font-black text-white uppercase tracking-tight">{selectedActivity.nome_cliente || 'N/A'}</p>
+                    <p className="text-sm font-black text-white uppercase tracking-tight">{formatClientName(selectedActivity)}</p>
                   </div>
                   <div>
                     <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-1">Endereço de Entrega</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{selectedActivity.endereco_cliente || 'Não informado'}</p>
+                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedActivity)}</p>
                   </div>
                 </div>
               </div>

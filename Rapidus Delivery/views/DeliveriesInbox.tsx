@@ -44,43 +44,26 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess }) =>
     try {
       // Buscar estabelecimentos, clientes (JSON) e entregas recusadas (tabela relational)
       const { data: estData } = await supabase.from('estabelecimentos').select('*');
-      const { data: clientData } = await supabase.from('clientes').select('numero, entregas');
       const { data: driverData } = await supabase.from('perfis').select('*').eq('funcao', 'entregador');
       const { data: refusedData } = await supabase.from('entregas').select('*').eq('status', 'aguardando');
 
       // Associar as entregas do JSON dos clientes
       const storesWithDeliveries = (estData || []).map(store => {
-        const jsonDeliveries = clientData?.find(c => c.numero === store.numero_whatsapp)?.entregas || [];
-
         // Formatar entregas do banco (aguardando)
         const formattedDbDeliveries = (refusedData || [])
           .filter(d => d.estabelecimento_id === store.id)
           .map(d => ({
-            id: d.id,
+            ...d,
             data_hora: d.data_entrega,
             valor_frete: d.valor_total.toString(),
             nome_cliente: d.nome_cliente || d.observacao?.replace('Extraída do WhatsApp: ', '') || 'Cliente',
             endereco_cliente: Array.isArray(d.endereco_cliente) ? d.endereco_cliente : [d.endereco_cliente].filter(Boolean),
-            observacao: d.observacao,
             isFromDB: true
           }));
 
-        // Formatar entregas do JSON
-        const formattedJsonDeliveries = jsonDeliveries.map((d: any) => {
-          const addr = d.endereco || {};
-          const addrArray = [addr.rua, addr.numero, addr.bairro, addr.cidade].filter(Boolean);
-
-          return {
-            ...d,
-            nome_cliente: d.nome || d.nome_cliente || d.observacao?.replace('Extraída do WhatsApp: ', '') || 'Cliente',
-            endereco_cliente: addrArray.length > 0 ? addrArray : [d.observacao?.replace('Extraída do WhatsApp: ', '')].filter(Boolean),
-            isFromDB: false
-          };
-        });
-
         return {
           ...store,
-          entregas: [...formattedJsonDeliveries, ...formattedDbDeliveries]
+          entregas: formattedDbDeliveries
         };
       });
 
@@ -104,27 +87,14 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess }) =>
 
     setProcessing(true);
     try {
-      if ((delivery as any).isFromDB) {
-        // Se já está no banco (aguardando), apenas atualizamos
-        const { error } = await supabase
-          .from('entregas')
-          .update({
-            entregador_id: driver?.id || null,
-            status: 'atribuida'
-          })
-          .eq('id', (delivery as any).id);
-        if (error) throw error;
-      } else {
-        // Se está no JSON, usamos a RPC existente
-        const { error } = await supabase.rpc('atribuir_entrega_do_json', {
-          p_cliente_numero: store.numero_whatsapp,
-          p_json_index: deliveryIndex,
-          p_entregador_id: driver?.id || null,
-          p_porcentagem_admin: driver?.porcentagem_lucro_admin || 20,
-          p_valor_fixo_admin: driver?.valor_fixo_admin || 0
-        });
-        if (error) throw error;
-      }
+      // Se já está no banco (aguardando), ou veio do JSON (que agora o trigger move para o banco)
+      const { error } = await supabase.rpc('atribuir_entrega_existente', {
+        p_entrega_id: delivery.id,
+        p_entregador_id: driver?.id || null,
+        p_porcentagem_admin: driver?.porcentagem_lucro_admin || 20,
+        p_valor_fixo_admin: driver?.valor_fixo_admin || 0
+      });
+      if (error) throw error;
       setAssigningPath(null);
       await fetchInboxData();
 
