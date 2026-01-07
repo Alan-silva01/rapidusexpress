@@ -31,13 +31,15 @@ const App: React.FC = () => {
       else setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session) {
+        if (event === 'SIGNED_IN') setCurrentView('dashboard');
         fetchProfile(session.user.id);
       }
       else {
         setProfile(null);
+        setCurrentView('dashboard');
         setLoading(false);
       }
     });
@@ -128,6 +130,7 @@ const App: React.FC = () => {
     await supabase.auth.signOut();
     setSession(null);
     setProfile(null);
+    setCurrentView('dashboard');
   };
 
   if (loading) {
