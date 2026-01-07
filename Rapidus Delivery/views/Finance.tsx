@@ -57,8 +57,9 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
         .gte('criado_at', `${startDate}T00:00:00Z`)
         .lte('criado_at', `${endDate}T23:59:59Z`);
 
+      const myDeliveries = globalStats?.filter(d => d.entregador_id === profile.id) || [];
+      const proprio = myDeliveries.reduce((acc, curr) => acc + (profile.funcao === 'admin' ? curr.valor_total : curr.valor_entregador), 0) || 0;
       const comissoes = globalStats?.filter(d => d.entregador_id !== profile.id).reduce((acc, curr) => acc + (curr.lucro_admin || 0), 0) || 0;
-      const proprio = globalStats?.filter(d => d.entregador_id === profile.id).reduce((acc, curr) => acc + (curr.valor_total || 0), 0) || 0;
 
       // 2. Fluxo de Caixa (Transações no período)
       const { data: txs } = await supabase
@@ -192,221 +193,227 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
                     <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">
-                      {profile?.funcao === 'admin' ? 'Comissões Parceiros' : 'Entregas Concluídas'}
+                      {profile?.funcao === 'admin' ? 'Comissões Parceiros' : 'Total das Entregas'}
                     </p>
-                    <p className="text-xl font-black text-white tracking-tighter">R$ {stats.comissoes.toFixed(2)}</p>
+                    <p className="text-xl font-black text-white tracking-tighter">R$ {(profile?.funcao === 'admin' ? stats.comissoes : stats.proprio).toFixed(2)}</p>
                   </div>
                   <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.04]">
-                    <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Entregas Próprias</p>
-                    <p className="text-xl font-black text-orange-primary tracking-tighter">R$ {stats.proprio.toFixed(2)}</p>
-                  </div>
-                </div>
-
-                {profile?.funcao === 'admin' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
-                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Efetuado (Motoboys)</p>
-                      <p className="text-sm font-bold text-red-500 tracking-tighter">- R$ {stats.pago.toFixed(2)}</p>
-                    </div>
-                    <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
-                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Recebido (Lojas)</p>
-                      <p className="text-sm font-bold text-lime-500 tracking-tighter">+ R$ {stats.recebido.toFixed(2)}</p>
-                    </div>
-                  </div>
-                )}
-
-                {profile?.funcao === 'admin' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="glass-card p-5 rounded-3xl border-lime-500/10 bg-lime-500/[0.02]">
-                      <p className="text-[8px] font-black text-lime-600 uppercase mb-1 tracking-widest">Lojas Pendentes</p>
-                      <p className="text-sm font-black text-white tracking-tighter text-lime-500">R$ {globalTotals.receivables.toFixed(2)}</p>
-                    </div>
-                    <div className="glass-card p-5 rounded-3xl border-red-500/10 bg-red-500/[0.02]">
-                      <p className="text-[8px] font-black text-red-600 uppercase mb-1 tracking-widest">Motoboys Pendentes</p>
-                      <p className="text-sm font-black text-white tracking-tighter text-red-500">R$ {globalTotals.payables.toFixed(2)}</p>
-                    </div>
-                  </div>
-                )}
+                    <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">
+                      {profile?.funcao === 'admin' ? 'Entregas Próprias' : 'Saldo Pendente'}
+                    </p>
+                    <p className="text-xl font-black text-orange-primary tracking-tighter">
+                      R$ {(profile?.funcao === 'admin' ? stats.proprio : (resumoDrivers.find(d => d.id === profile?.id)?.saldo_a_pagar || 0)).toFixed(2)}
+                    </p>
+                  </div>          </div>
               </div>
 
               {profile?.funcao === 'admin' && (
-                <div className="py-2">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-700 px-1 mb-3">Relatório de Ganhos (Lucro Estimado)</h3>
-                  <div className="grid grid-cols-2 gap-3 mb-2">
-                    <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5">
-                      <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Ganhos em Comissões</p>
-                      <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.comissoes.toFixed(2)}</p>
-                      <p className="text-[7px] text-gray-800 uppercase font-black">Das entregas de terceiros</p>
-                    </div>
-                    <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 text-right">
-                      <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Suas Próprias Entregas</p>
-                      <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.proprio.toFixed(2)}</p>
-                      <p className="text-[7px] text-gray-800 uppercase font-black">Seu ganho 100% (Sem taxas)</p>
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
+                    <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Efetuado (Motoboys)</p>
+                    <p className="text-sm font-bold text-red-500 tracking-tighter">- R$ {stats.pago.toFixed(2)}</p>
+                  </div>
+                  <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
+                    <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">Recebido (Lojas)</p>
+                    <p className="text-sm font-bold text-lime-500 tracking-tighter">+ R$ {stats.recebido.toFixed(2)}</p>
                   </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="glass-card p-5 rounded-3xl bg-lime-500/[0.03] border-lime-500/10">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="p-1.5 rounded-lg bg-lime-500/10 text-lime-500">
-                      <ArrowUpCircle size={14} />
-                    </div>
-                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest leading-tight">Recebeu das Lojas</p>
-                  </div>
-                  <p className="text-xl font-black text-white tracking-tighter">R$ {stats.recebido.toFixed(2)}</p>
-                  <p className="text-[7px] text-gray-700 font-bold uppercase mt-1">Total que já entrou no caixa</p>
-                </div>
-
-                <div className="glass-card p-5 rounded-3xl bg-orange-primary/[0.03] border-orange-primary/10">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="p-1.5 rounded-lg bg-orange-primary/10 text-orange-primary">
-                      <ArrowDownCircle size={14} />
-                    </div>
-                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest leading-tight">Pagou aos Entregadores</p>
-                  </div>
-                  <p className="text-xl font-black text-white tracking-tighter">R$ {stats.pago.toFixed(2)}</p>
-                  <p className="text-[7px] text-gray-700 font-bold uppercase mt-1">Total que já saiu do caixa</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-6">
-            <div className="flex items-center gap-2 px-1">
-              <div className="flex-1 bg-white/5 rounded-2xl h-12 flex items-center px-4 gap-3 border border-white/5">
-                <Search size={16} className="text-gray-700" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  placeholder="Buscar loja ou motoboy..."
-                  className="bg-transparent text-xs font-bold text-white outline-none w-full placeholder:text-gray-800"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between px-1">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Lojas em Aberto</h3>
-                {startDate && <span className="text-[8px] font-black text-lime-500 uppercase tracking-widest bg-lime-500/10 px-2 py-0.5 rounded-full">Filtrado</span>}
-              </div>
-              <div className="space-y-2">
-                {resumoStores
-                  .filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map(store => (
-                    <FinanceRow
-                      key={store.id}
-                      title={store.nome}
-                      subtitle={`${store.total_entregas || 0} entregas totais`}
-                      value={store.saldo_faltante || 0}
-                      orange={(store.saldo_faltante || 0) > 0}
-                      periodLabel="Recebido"
-                      periodValue={store.periodReceived}
-                      onClick={() => openPaymentModal(store.id, 'recebimento_estabelecimento', store.saldo_faltante)}
-                    />
-                  ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Pendências Motoboys</h3>
-              <div className="space-y-2">
-                {resumoDrivers
-                  .filter(d => d.nome.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map(driver => (
-                    <FinanceRow
-                      key={driver.id}
-                      title={driver.nome}
-                      subtitle="Dívida acumulada"
-                      value={driver.saldo_a_pagar || 0}
-                      orange={(driver.saldo_a_pagar || 0) > 0}
-                      periodLabel="Pago"
-                      periodValue={driver.periodPaid}
-                      onClick={() => openPaymentModal(driver.id, 'pagamento_entregador', driver.saldo_a_pagar)}
-                    />
-                  ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Fluxo de Pagamentos Realizados</h3>
-              <div className="space-y-2">
-                {transactions.filter(t => ['recebimento_estabelecimento', 'pagamento_entregador'].includes(t.tipo)).length === 0 ? (
-                  <div className="glass-card p-10 text-center border-dashed border-white/5">
-                    <History size={24} className="mx-auto mb-2 text-gray-800" />
-                    <p className="text-[8px] text-gray-700 font-black uppercase tracking-widest">Nenhuma movimentação no período</p>
-                  </div>
-                ) : (
-                  transactions.filter(t => ['recebimento_estabelecimento', 'pagamento_entregador'].includes(t.tipo)).slice(0, 50).map(tx => (
-                    <TransactionRow
-                      key={tx.id}
-                      tipo={tx.tipo}
-                      valor={tx.valor}
-                      data={tx.data_transacao}
-                      metodo={tx.metodo_pagamento}
-                      obs={tx.observacao}
-                      entidade={
-                        tx.tipo === 'recebimento_estabelecimento'
-                          ? resumoStores.find(s => s.id === tx.entidade_id)?.nome || 'Loja'
-                          : resumoDrivers.find(d => d.id === tx.entidade_id)?.nome || 'Motoboy'
-                      }
-                    />
-                  ))
-                )}
-              </div>
-            </div>
-          </section>
-        </>
-      )}
-
-      {showModal && (
-        { showModal && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md overflow-y-auto overflow-x-hidden" onClick={() => setShowModal(false)}>
-            <div className="glass-card w-full max-w-sm p-8 rounded-[2.5rem] border-white/10 my-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-black uppercase tracking-tighter">Lançamento</h2>
-                <button onClick={() => setShowModal(false)} className="text-gray-600"><X size={20} /></button>
-              </div>
-              <form onSubmit={handleAddTransaction} className="space-y-5">
-                <div className="flex p-1 bg-white/5 rounded-2xl">
-                  <button type="button" onClick={() => setTipo('recebimento_estabelecimento')} className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'recebimento_estabelecimento' ? 'bg-orange-primary text-white' : 'text-gray-600'}`}>Loja</button>
-                  <button type="button" onClick={() => setTipo('pagamento_entregador')} className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'pagamento_entregador' ? 'bg-orange-primary text-white' : 'text-gray-600'}`}>Motoboy</button>
-                </div>
-                <div>
-                  <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Entidade</label>
-                  <select value={entidadeId} onChange={(e) => setEntidadeId(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-[11px] font-bold text-white outline-none focus:border-orange-primary/20 appearance-none">
-                    <option value="">Selecione...</option>
-                    {tipo === 'recebimento_estabelecimento' ? resumoStores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>) : resumoDrivers.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Observação (Opcional)</label>
-                  <input type="text" value={observacao} onChange={(e) => setObservacao(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-orange-primary/20" placeholder="Ex: Pagamento parcial da semana" />
-                </div>
+              {profile?.funcao === 'admin' && (
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Valor</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-orange-primary/20" placeholder="0,00" />
+                  <div className="glass-card p-5 rounded-3xl border-lime-500/10 bg-lime-500/[0.02]">
+                    <p className="text-[8px] font-black text-lime-600 uppercase mb-1 tracking-widest">Lojas Pendentes</p>
+                    <p className="text-sm font-black text-white tracking-tighter text-lime-500">R$ {globalTotals.receivables.toFixed(2)}</p>
                   </div>
-                  <div>
-                    <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Método</label>
-                    <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-[11px] font-bold text-white outline-none focus:border-orange-primary/20 appearance-none">
-                      <option value="PIX">PIX</option>
-                      <option value="Dinheiro">Dinheiro</option>
-                      <option value="Cartão">Cartão</option>
-                    </select>
+                  <div className="glass-card p-5 rounded-3xl border-red-500/10 bg-red-500/[0.02]">
+                    <p className="text-[8px] font-black text-red-600 uppercase mb-1 tracking-widest">Motoboys Pendentes</p>
+                    <p className="text-sm font-black text-white tracking-tighter text-red-500">R$ {globalTotals.payables.toFixed(2)}</p>
                   </div>
                 </div>
-                <button disabled={saving} className="w-full h-14 bg-orange-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-orange-primary/20 transition-all active:scale-95 disabled:opacity-50">
-                  {saving ? <Loader2 className="animate-spin mx-auto" size={20} /> : 'Confirmar Lançamento'}
-                </button>
-              </form>
+              )}
+            </div>
+
+            {profile?.funcao === 'admin' && (
+              <div className="py-2">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-700 px-1 mb-3">Relatório de Ganhos (Lucro Estimado)</h3>
+                <div className="grid grid-cols-2 gap-3 mb-2">
+                  <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5">
+                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Ganhos em Comissões</p>
+                    <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.comissoes.toFixed(2)}</p>
+                    <p className="text-[7px] text-gray-800 uppercase font-black">Das entregas de terceiros</p>
+                  </div>
+                  <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 text-right">
+                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Suas Próprias Entregas</p>
+                    <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.proprio.toFixed(2)}</p>
+                    <p className="text-[7px] text-gray-800 uppercase font-black">Seu ganho 100% (Sem taxas)</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="glass-card p-5 rounded-3xl bg-lime-500/[0.03] border-lime-500/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded-lg bg-lime-500/10 text-lime-500">
+                    <ArrowUpCircle size={14} />
+                  </div>
+                  <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest leading-tight">Recebeu das Lojas</p>
+                </div>
+                <p className="text-xl font-black text-white tracking-tighter">R$ {stats.recebido.toFixed(2)}</p>
+                <p className="text-[7px] text-gray-700 font-bold uppercase mt-1">Total que já entrou no caixa</p>
+              </div>
+
+              <div className="glass-card p-5 rounded-3xl bg-orange-primary/[0.03] border-orange-primary/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded-lg bg-orange-primary/10 text-orange-primary">
+                    <ArrowDownCircle size={14} />
+                  </div>
+                  <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest leading-tight">Pagou aos Entregadores</p>
+                </div>
+                <p className="text-xl font-black text-white tracking-tighter">R$ {stats.pago.toFixed(2)}</p>
+                <p className="text-[7px] text-gray-700 font-bold uppercase mt-1">Total que já saiu do caixa</p>
+              </div>
             </div>
           </div>
-        )}
+        </section>
+
+      <section className="space-y-6">
+        <div className="flex items-center gap-2 px-1">
+          <div className="flex-1 bg-white/5 rounded-2xl h-12 flex items-center px-4 gap-3 border border-white/5">
+            <Search size={16} className="text-gray-700" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Buscar loja ou motoboy..."
+              className="bg-transparent text-xs font-bold text-white outline-none w-full placeholder:text-gray-800"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Lojas em Aberto</h3>
+            {startDate && <span className="text-[8px] font-black text-lime-500 uppercase tracking-widest bg-lime-500/10 px-2 py-0.5 rounded-full">Filtrado</span>}
+          </div>
+          <div className="space-y-2">
+            {resumoStores
+              .filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map(store => (
+                <FinanceRow
+                  key={store.id}
+                  title={store.nome}
+                  subtitle={`${store.total_entregas || 0} entregas totais`}
+                  value={store.saldo_faltante || 0}
+                  orange={(store.saldo_faltante || 0) > 0}
+                  periodLabel="Recebido"
+                  periodValue={store.periodReceived}
+                  onClick={() => openPaymentModal(store.id, 'recebimento_estabelecimento', store.saldo_faltante)}
+                />
+              ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Pendências Motoboys</h3>
+          <div className="space-y-2">
+            {resumoDrivers
+              .filter(d => d.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map(driver => (
+                <FinanceRow
+                  key={driver.id}
+                  title={driver.nome}
+                  subtitle="Dívida acumulada"
+                  value={driver.saldo_a_pagar || 0}
+                  orange={(driver.saldo_a_pagar || 0) > 0}
+                  periodLabel="Pago"
+                  periodValue={driver.periodPaid}
+                  onClick={() => openPaymentModal(driver.id, 'pagamento_entregador', driver.saldo_a_pagar)}
+                />
+              ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Fluxo de Pagamentos Realizados</h3>
+          <div className="space-y-2">
+            {transactions.filter(t => ['recebimento_estabelecimento', 'pagamento_entregador'].includes(t.tipo)).length === 0 ? (
+              <div className="glass-card p-10 text-center border-dashed border-white/5">
+                <History size={24} className="mx-auto mb-2 text-gray-800" />
+                <p className="text-[8px] text-gray-700 font-black uppercase tracking-widest">Nenhuma movimentação no período</p>
+              </div>
+            ) : (
+              transactions.filter(t => ['recebimento_estabelecimento', 'pagamento_entregador'].includes(t.tipo)).slice(0, 50).map(tx => (
+                <TransactionRow
+                  key={tx.id}
+                  tipo={tx.tipo}
+                  valor={tx.valor}
+                  data={tx.data_transacao}
+                  metodo={tx.metodo_pagamento}
+                  obs={tx.observacao}
+                  entidade={
+                    tx.tipo === 'recebimento_estabelecimento'
+                      ? resumoStores.find(s => s.id === tx.entidade_id)?.nome || 'Loja'
+                      : resumoDrivers.find(d => d.id === tx.entidade_id)?.nome || 'Motoboy'
+                  }
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+    </>
+  )
+}
+
+{
+  showModal && (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md overflow-y-auto overflow-x-hidden" onClick={() => setShowModal(false)}>
+      <div className="glass-card w-full max-w-sm p-8 rounded-[2.5rem] border-white/10 my-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-black uppercase tracking-tighter">Lançamento</h2>
+          <button onClick={() => setShowModal(false)} className="text-gray-600"><X size={20} /></button>
+        </div>
+        <form onSubmit={handleAddTransaction} className="space-y-5">
+          <div className="flex p-1 bg-white/5 rounded-2xl">
+            <button type="button" onClick={() => setTipo('recebimento_estabelecimento')} className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'recebimento_estabelecimento' ? 'bg-orange-primary text-white' : 'text-gray-600'}`}>Loja</button>
+            <button type="button" onClick={() => setTipo('pagamento_entregador')} className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'pagamento_entregador' ? 'bg-orange-primary text-white' : 'text-gray-600'}`}>Motoboy</button>
+          </div>
+          <div>
+            <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Entidade</label>
+            <select value={entidadeId} onChange={(e) => setEntidadeId(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-[11px] font-bold text-white outline-none focus:border-orange-primary/20 appearance-none">
+              <option value="">Selecione...</option>
+              {tipo === 'recebimento_estabelecimento' ? resumoStores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>) : resumoDrivers.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Observação (Opcional)</label>
+            <input type="text" value={observacao} onChange={(e) => setObservacao(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-orange-primary/20" placeholder="Ex: Pagamento parcial da semana" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Valor</label>
+              <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-orange-primary/20" placeholder="0,00" />
+            </div>
+            <div>
+              <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Método</label>
+              <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-[11px] font-bold text-white outline-none focus:border-orange-primary/20 appearance-none">
+                <option value="PIX">PIX</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Cartão">Cartão</option>
+              </select>
+            </div>
+          </div>
+          <button disabled={saving} className="w-full h-14 bg-orange-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-orange-primary/20 transition-all active:scale-95 disabled:opacity-50">
+            {saving ? <Loader2 className="animate-spin mx-auto" size={20} /> : 'Confirmar Lançamento'}
+          </button>
+        </form>
+      </div>
     </div>
+  )
+}
+    </div >
   );
 };
 
