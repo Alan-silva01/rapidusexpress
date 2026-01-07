@@ -6,10 +6,11 @@ import { Plus, X, Loader2, ChevronRight } from 'lucide-react';
 const Finance: React.FC = () => {
   const [resumoStores, setResumoStores] = useState<any[]>([]);
   const [resumoDrivers, setResumoDrivers] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  
+
   const [tipo, setTipo] = useState<'recebimento_estabelecimento' | 'pagamento_entregador'>('recebimento_estabelecimento');
   const [entidadeId, setEntidadeId] = useState('');
   const [valor, setValor] = useState('');
@@ -23,8 +24,17 @@ const Finance: React.FC = () => {
     try {
       const { data: stores } = await supabase.from('v_resumo_estabelecimentos').select('*');
       const { data: drivers } = await supabase.from('v_resumo_entregadores').select('*');
+
+      // Buscar transações com join relacional (se existir FK no banco)
+      const { data: txs } = await supabase
+        .from('transacoes_financeiras')
+        .select('*')
+        .order('data_transacao', { ascending: false })
+        .limit(20);
+
       setResumoStores(stores || []);
       setResumoDrivers(drivers || []);
+      setTransactions(txs || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -62,7 +72,7 @@ const Finance: React.FC = () => {
           <h1 className="text-xl font-black uppercase tracking-tighter">Caixa Geral</h1>
           <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Fluxo de pagamentos</p>
         </div>
-        <button 
+        <button
           onClick={() => setShowModal(true)}
           className="w-10 h-10 bg-orange-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-primary/20"
         >
@@ -97,6 +107,30 @@ const Finance: React.FC = () => {
                 {resumoDrivers.map(driver => (
                   <FinanceRow key={driver.id} title={driver.nome} subtitle="Saldo acumulado" value={driver.saldo_a_pagar || 0} orange={(driver.saldo_a_pagar || 0) > 0} />
                 ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Últimas Transações</h3>
+              <div className="space-y-2">
+                {transactions.length === 0 ? (
+                  <div className="text-center py-4 text-[10px] text-gray-700 font-black uppercase tracking-widest">Nenhuma transação registrada</div>
+                ) : (
+                  transactions.map(tx => (
+                    <TransactionRow
+                      key={tx.id}
+                      tipo={tx.tipo}
+                      valor={tx.valor}
+                      data={tx.data_transacao}
+                      metodo={tx.metodo_pagamento}
+                      entidade={
+                        tx.tipo === 'recebimento_estabelecimento'
+                          ? resumoStores.find(s => s.id === tx.entidade_id)?.nome || 'Loja'
+                          : resumoDrivers.find(d => d.id === tx.entidade_id)?.nome || 'Motoboy'
+                      }
+                    />
+                  ))
+                )}
               </div>
             </div>
           </section>
@@ -162,6 +196,27 @@ const FinanceRow = ({ title, subtitle, value, orange }: any) => (
     <div className="text-right">
       <p className={`text-sm font-black tracking-tighter ${orange ? 'text-orange-primary' : 'text-lime-500'}`}>R$ {(value || 0).toFixed(2)}</p>
       <ChevronRight size={12} className="text-gray-800 ml-auto mt-0.5" />
+    </div>
+  </div>
+);
+
+const TransactionRow = ({ entidade, valor, tipo, data, metodo }: any) => (
+  <div className="glass-card p-3 rounded-2xl flex items-center justify-between border-white/[0.03]">
+    <div className="flex items-center gap-3">
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black ${tipo === 'recebimento_estabelecimento' ? 'bg-lime-500/10 text-lime-500' : 'bg-orange-primary/10 text-orange-primary'}`}>
+        {tipo === 'recebimento_estabelecimento' ? 'IN' : 'OUT'}
+      </div>
+      <div>
+        <h4 className="text-[11px] font-black tracking-tight text-white">{entidade}</h4>
+        <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest leading-none mt-1">
+          {new Date(data).toLocaleDateString('pt-BR')} • {metodo}
+        </p>
+      </div>
+    </div>
+    <div className="text-right">
+      <p className={`text-xs font-black tracking-tighter ${tipo === 'recebimento_estabelecimento' ? 'text-lime-500' : 'text-orange-primary'}`}>
+        {tipo === 'recebimento_estabelecimento' ? '+' : '-'} R$ {parseFloat(valor).toFixed(2)}
+      </p>
     </div>
   </div>
 );

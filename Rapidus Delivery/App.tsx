@@ -11,11 +11,13 @@ import MapView from './views/MapView';
 import DriverManagement from './views/DriverManagement';
 import { Layout } from './components/Layout';
 
+import DeliveriesHistory from './views/DeliveriesHistory';
+
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<Perfil | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'inbox' | 'profile' | 'finance' | 'map' | 'drivers' | 'new_client' | 'self_delivery'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'inbox' | 'profile' | 'finance' | 'map' | 'drivers' | 'new_client' | 'self_delivery' | 'history'>('dashboard');
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'searching' | 'active' | 'denied' | 'error'>('idle');
 
   useEffect(() => {

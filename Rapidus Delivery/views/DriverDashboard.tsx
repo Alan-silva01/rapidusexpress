@@ -6,9 +6,10 @@ import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, Alert
 
 interface DriverDashboardProps {
   profile: Perfil;
+  onViewChange?: (view: any) => void;
 }
 
-const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile }) => {
+const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange }) => {
   const [isOnline, setIsOnline] = useState(profile.disponivel);
   const [modalType, setModalType] = useState<'success' | 'error' | 'confirm' | null>(null);
   const [processing, setProcessing] = useState(false);

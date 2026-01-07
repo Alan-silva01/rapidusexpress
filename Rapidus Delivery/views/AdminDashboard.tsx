@@ -21,6 +21,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterDriver, setFilterDriver] = useState<string>('all');
   const [filterStore, setFilterStore] = useState<string>('all');
+  const [filterSearch, setFilterSearch] = useState<string>('');
 
   // Listas para os Selects
   const [availableDrivers, setAvailableDrivers] = useState<any[]>([]);
@@ -48,7 +49,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [filterStatus, filterDriver, filterStore]);
+  }, [filterStatus, filterDriver, filterStore, filterSearch]);
 
   const fetchFilterData = async () => {
     const { data: stores } = await supabase.from('estabelecimentos').select('id, nome').order('nome');
@@ -73,6 +74,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
       if (filterStatus !== 'all') query = query.eq('status', filterStatus);
       if (filterDriver !== 'all') query = query.eq('entregador_id', filterDriver);
       if (filterStore !== 'all') query = query.eq('estabelecimento_id', filterStore);
+      if (filterSearch) {
+        query = query.or(`nome_cliente.ilike.%${filterSearch}%,observacao.ilike.%${filterSearch}%`);
+      }
 
       const { data, error } = await query.limit(20);
 
@@ -133,7 +137,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700 group-focus-within:text-orange-primary transition-colors" size={16} />
         <input
           type="text"
-          placeholder="Rastrear pedido..."
+          placeholder="Buscar cliente ou observação..."
+          value={filterSearch}
+          onChange={(e) => setFilterSearch(e.target.value)}
           className="w-full h-12 bg-[#0A0A0A] rounded-2xl pl-11 pr-4 text-xs font-bold border border-white/5 outline-none focus:border-orange-primary/20 transition-all placeholder:text-gray-700"
         />
       </div>
