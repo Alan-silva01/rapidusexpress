@@ -68,13 +68,30 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
 
         // Formatar entregas do JSON com fallbacks
         const formattedJsonDeliveries = jsonDeliveries.map((d: any) => {
-          const addr = d.endereco || {};
-          const addrArray = [addr.rua, addr.numero, addr.bairro, addr.cidade].filter(Boolean);
+          const obs = d.observacao || d.observacoes || '';
+
+          // Prioridade 1: Campo endereco_cliente (vinda do n8n ou manual)
+          let finalAddress = [];
+          if (Array.isArray(d.endereco_cliente)) {
+            finalAddress = d.endereco_cliente;
+          } else if (typeof d.endereco_cliente === 'string' && d.endereco_cliente) {
+            finalAddress = [d.endereco_cliente];
+          }
+          // Prioridade 2: Objeto endereco antigo
+          else {
+            const addr = d.endereco || {};
+            finalAddress = [addr.rua, addr.numero, addr.bairro, addr.cidade].filter(Boolean);
+          }
+
+          // Se ainda estiver vazio, tentar pegar da observação
+          if (finalAddress.length === 0 && obs) {
+            finalAddress = [obs.replace('Extraída do WhatsApp: ', '')];
+          }
 
           return {
             ...d,
-            nome_cliente: d.nome || d.nome_cliente || d.observacao?.replace('Extraída do WhatsApp: ', '') || 'Cliente',
-            endereco_cliente: addrArray.length > 0 ? addrArray : [d.observacao?.replace('Extraída do WhatsApp: ', '')].filter(Boolean),
+            nome_cliente: d.nome_cliente || d.nome || (obs.length < 40 ? obs.replace('Extraída do WhatsApp: ', '') : 'Cliente'),
+            endereco_cliente: finalAddress.length > 0 ? finalAddress : ['N/A'],
             isFromDB: false
           };
         });
