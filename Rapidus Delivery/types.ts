@@ -43,8 +43,11 @@ export interface Entrega {
   pago_pelo_estabelecimento: boolean;
   pago_ao_entregador: boolean;
   data_entrega: string;
-  status: 'pendente' | 'atribuida' | 'concluida';
+  status: 'pendente' | 'atribuida' | 'aceita' | 'coletada' | 'em_rota' | 'finalizada';
   observacao?: string;
+  nome_cliente?: string;
+  telefone_cliente?: string;
+  endereco_cliente?: string[];
   criado_at: string;
 }
 

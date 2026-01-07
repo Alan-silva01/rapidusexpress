@@ -168,17 +168,18 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                     <Wallet size={24} />
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Seu Saldo Total</p>
+                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Seu Saldo (Ganho Real)</p>
                     <p className="text-3xl font-black text-white tracking-tighter">R$ {(stats.comissoes + stats.proprio).toFixed(2)}</p>
+                    <p className="text-[8px] text-gray-700 font-bold uppercase mt-1">Soma de comissões e entregas próprias</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-5">
                   <div>
-                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Comissões</p>
+                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Comissões Recebidas</p>
                     <p className="text-sm font-black text-lime-500 tracking-tighter">R$ {stats.comissoes.toFixed(2)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Suas Entregas</p>
+                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Fez em Entregas Próprias</p>
                     <p className="text-sm font-black text-orange-primary tracking-tighter">R$ {stats.proprio.toFixed(2)}</p>
                   </div>
                 </div>
@@ -190,10 +191,10 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                     <div className="p-1.5 rounded-lg bg-lime-500/10 text-lime-500">
                       <ArrowUpCircle size={14} />
                     </div>
-                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest">Recebido</p>
+                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest leading-tight">Recebeu das Lojas</p>
                   </div>
                   <p className="text-xl font-black text-white tracking-tighter">R$ {stats.recebido.toFixed(2)}</p>
-                  <p className="text-[7px] text-gray-700 font-bold uppercase mt-1">Das lojas no período</p>
+                  <p className="text-[7px] text-gray-700 font-bold uppercase mt-1">No período filtrado</p>
                 </div>
 
                 <div className="glass-card p-5 rounded-3xl bg-orange-primary/[0.03] border-orange-primary/10">
@@ -201,10 +202,10 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                     <div className="p-1.5 rounded-lg bg-orange-primary/10 text-orange-primary">
                       <ArrowDownCircle size={14} />
                     </div>
-                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest">Pago</p>
+                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest leading-tight">Pagou aos Entregadores</p>
                   </div>
                   <p className="text-xl font-black text-white tracking-tighter">R$ {stats.pago.toFixed(2)}</p>
-                  <p className="text-[7px] text-gray-700 font-bold uppercase mt-1">Aos motoboys no período</p>
+                  <p className="text-[7px] text-gray-700 font-bold uppercase mt-1">No período filtrado</p>
                 </div>
               </div>
             </div>
