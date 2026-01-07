@@ -233,22 +233,13 @@ const PriceTables: React.FC<PriceTablesProps> = ({ onBack }) => {
                 </table>
             </div>
 
-            {/* Info Alert - Moved above button area */}
-            <div className="bg-sky-500/5 border border-sky-500/10 p-5 rounded-[2rem] flex items-start gap-4">
-                <AlertCircle className="text-sky-500 shrink-0" size={18} />
-                <div>
-                    <p className="text-[10px] font-bold text-sky-500 uppercase tracking-widest mb-1">Dica de Gestão</p>
-                    <p className="text-[10px] text-gray-500 leading-relaxed font-black uppercase">Clique nas abas acima para alternar entre as diferentes tabelas de preços de frete.</p>
-                </div>
-            </div>
-
             {/* Botão Fixo Salvar */}
             {!loading && data.length > 0 && (
                 <div className="fixed bottom-28 left-0 right-0 px-6 py-4 bg-gradient-to-t from-black via-black to-transparent z-[100]">
                     <button
                         onClick={saveChanges}
                         disabled={saving}
-                        className="w-full max-w-sm mx-auto h-14 bg-lime-500 hover:bg-lime-600 disabled:opacity-50 text-black rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-lime-500/20 transition-all"
+                        className="w-full max-w-sm mx-auto h-14 bg-lime-500 hover:bg-lime-600 disabled:opacity-50 text-black rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-lime-500/20 transition-all font-inter"
                     >
                         {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
                         {saving ? 'Guardando...' : 'Salvar todas as alterações'}
