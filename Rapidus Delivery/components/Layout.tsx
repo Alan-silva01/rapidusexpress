@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, Inbox, User, DollarSign, Map as MapIcon, Users, Bike } from 'lucide-react';
+import { Home, Inbox, User, DollarSign, Map as MapIcon, Users, Bike, Tag } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -27,10 +27,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, role, currentView, onV
               <MobileNavItem active={currentView === 'self_delivery'} onClick={() => onViewChange('self_delivery')} icon={<Bike size={18} strokeWidth={1.5} />} />
             )}
 
-            <MobileNavItem active={currentView === 'map'} onClick={() => onViewChange('map')} icon={<MapIcon size={18} strokeWidth={1.5} />} />
-
             {role === 'admin' && (
-              <MobileNavItem active={currentView === 'drivers'} onClick={() => onViewChange('drivers')} icon={<Users size={18} strokeWidth={1.5} />} />
+              <MobileNavItem active={currentView === 'prices'} onClick={() => onViewChange('prices')} icon={<Tag size={18} strokeWidth={1.5} />} />
             )}
 
             <MobileNavItem active={currentView === 'finance'} onClick={() => onViewChange('finance')} icon={<DollarSign size={18} strokeWidth={1.5} />} />

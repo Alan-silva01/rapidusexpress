@@ -205,7 +205,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                   </div>
                   <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.04]">
                     <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">
-                      {profile?.funcao === 'admin' ? 'Entregas Próprias' : 'Saldo Pendente'}
+                      {profile?.funcao === 'admin' ? 'Entrega feita por você' : 'Saldo Pendente'}
                     </p>
                     <p className="text-xl font-black text-orange-primary tracking-tighter">
                       R$ {(profile?.funcao === 'admin' ? stats.proprio : (resumoDrivers.find(d => d.id === profile?.id)?.saldo_a_pagar || 0)).toFixed(2)}

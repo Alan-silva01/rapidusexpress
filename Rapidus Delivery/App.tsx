@@ -12,12 +12,13 @@ import DriverManagement from './views/DriverManagement';
 import { Layout } from './components/Layout';
 
 import DeliveriesHistory from './views/DeliveriesHistory';
+import PriceTables from './views/PriceTables';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<Perfil | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'inbox' | 'profile' | 'finance' | 'map' | 'drivers' | 'new_client' | 'self_delivery' | 'history'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'inbox' | 'profile' | 'finance' | 'map' | 'drivers' | 'new_client' | 'self_delivery' | 'history' | 'prices'>('dashboard');
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'searching' | 'active' | 'denied' | 'error'>('idle');
 
   useEffect(() => {
@@ -181,6 +182,8 @@ const App: React.FC = () => {
         return <DriverDashboard profile={profile} onViewChange={setCurrentView} />;
       case 'history':
         return <DeliveriesHistory profileId={profile.id} onBack={() => setCurrentView('dashboard')} />;
+      case 'prices':
+        return <PriceTables onBack={() => setCurrentView('dashboard')} />;
       default:
         return <AdminDashboard onViewChange={setCurrentView} profile={profile} />;
     }

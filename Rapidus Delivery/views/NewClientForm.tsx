@@ -10,6 +10,7 @@ interface NewClientFormProps {
 
 const NewClientForm: React.FC<NewClientFormProps> = ({ onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
+    const [priceColumns, setPriceColumns] = useState<string[]>([]);
     const [formData, setFormData] = useState({
         nome: '',
         preco: 'pre_001',
@@ -22,6 +23,17 @@ const NewClientForm: React.FC<NewClientFormProps> = ({ onClose, onSuccess }) => 
         cidade: 'Açailândia',
         estado: 'MA'
     });
+
+    React.useEffect(() => {
+        const fetchColumns = async () => {
+            const { data } = await supabase.from('taxas_entrega').select('*').limit(1);
+            if (data && data[0]) {
+                const cols = Object.keys(data[0]).filter(k => k.startsWith('pre_')).sort();
+                setPriceColumns(cols);
+            }
+        };
+        fetchColumns();
+    }, []);
 
     const formatWhatsApp = (phone: string) => {
         // Remove tudo que não é número
@@ -141,9 +153,10 @@ const NewClientForm: React.FC<NewClientFormProps> = ({ onClose, onSuccess }) => 
                                         onChange={e => setFormData({ ...formData, preco: e.target.value })}
                                         className="input-base cursor-pointer"
                                     >
-                                        <option value="pre_001">TABELA 01</option>
-                                        <option value="pre_002">TABELA 02</option>
-                                        <option value="pre_003">TABELA 03</option>
+                                        {priceColumns.map(col => (
+                                            <option key={col} value={col}>{col.replace('pre_', 'TABELA ')}</option>
+                                        ))}
+                                        {priceColumns.length === 0 && <option value="pre_001">TABELA 01</option>}
                                     </select>
                                 </InputGroup>
                             </div>
