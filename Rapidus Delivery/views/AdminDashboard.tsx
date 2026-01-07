@@ -5,6 +5,51 @@ import { supabase } from '../supabase';
 import { Perfil } from '../types';
 import NewClientForm from './NewClientForm';
 
+// Helper functions moved to module level
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'atribuida': return 'text-orange-primary animate-pulse';
+    case 'aceita': return 'text-sky-400';
+    case 'coletada': return 'text-indigo-400';
+    case 'em_rota': return 'text-amber-400';
+    case 'finalizada': return 'text-lime-500';
+    case 'recusada': return 'text-red-500';
+    case 'aguardando': return 'text-gray-500';
+    default: return 'text-gray-400';
+  }
+};
+
+const formatTime = (dateString: string) => {
+  const diff = Math.floor((new Date().getTime() - new Date(dateString).getTime()) / 60000);
+  if (diff < 1) return 'Agora';
+  if (diff < 60) return `${diff}m`;
+  const hours = Math.floor(diff / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+};
+
+const formatAddress = (delivery: any) => {
+  const addr = delivery.endereco_cliente;
+  if (!addr || (Array.isArray(addr) && addr.length === 0)) {
+    if (delivery.observacao) {
+      const cleanObs = delivery.observacao.replace('Extraída do WhatsApp: ', '');
+      if (cleanObs.includes('Rua') || cleanObs.includes('Bairro') || cleanObs.includes(',')) return cleanObs;
+    }
+    return 'Não informado';
+  }
+  if (Array.isArray(addr)) return addr.join(', ');
+  return addr;
+};
+
+const formatClientName = (delivery: any) => {
+  if (delivery.nome_cliente) return delivery.nome_cliente;
+  if (delivery.observacao) {
+    const cleanObs = delivery.observacao.replace('Extraída do WhatsApp: ', '');
+    if (cleanObs.length < 40 && !cleanObs.includes('Rua')) return cleanObs;
+  }
+  return 'N/A';
+};
+
 interface AdminDashboardProps {
   onViewChange: (view: any) => void;
   profile?: Perfil | null;
@@ -14,8 +59,12 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, showNewClientForm }) => {
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'info' | 'alert' } | null>(null);
-  const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpand = (id: string) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
 
   // Estados de Filtro
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -89,49 +138,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'atribuida': return 'text-orange-primary animate-pulse';
-      case 'aceita': return 'text-sky-400';
-      case 'coletada': return 'text-indigo-400';
-      case 'em_rota': return 'text-amber-400';
-      case 'finalizada': return 'text-lime-500';
-      case 'recusada': return 'text-red-500';
-      case 'aguardando': return 'text-gray-500';
-      default: return 'text-gray-400';
-    }
-  };
 
-  const formatTime = (dateString: string) => {
-    const diff = Math.floor((new Date().getTime() - new Date(dateString).getTime()) / 60000);
-    if (diff < 1) return 'Agora';
-    if (diff < 60) return `${diff}m`;
-    const hours = Math.floor(diff / 60);
-    if (hours < 24) return `${hours}h`;
-    return `${Math.floor(hours / 24)}d`;
-  };
-
-  const formatAddress = (delivery: any) => {
-    const addr = delivery.endereco_cliente;
-    if (!addr || (Array.isArray(addr) && addr.length === 0)) {
-      if (delivery.observacao) {
-        const cleanObs = delivery.observacao.replace('Extraída do WhatsApp: ', '');
-        if (cleanObs.includes('Rua') || cleanObs.includes('Bairro') || cleanObs.includes(',')) return cleanObs;
-      }
-      return 'Não informado';
-    }
-    if (Array.isArray(addr)) return addr.join(', ');
-    return addr;
-  };
-
-  const formatClientName = (delivery: any) => {
-    if (delivery.nome_cliente) return delivery.nome_cliente;
-    if (delivery.observacao) {
-      const cleanObs = delivery.observacao.replace('Extraída do WhatsApp: ', '');
-      if (cleanObs.length < 40 && !cleanObs.includes('Rua')) return cleanObs;
-    }
-    return 'N/A';
-  };
 
   return (
     <div className="space-y-6 animate-fade">
@@ -274,13 +281,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
             recentActivities.map((activity) => (
               <ActivityItem
                 key={activity.id}
-                onClick={() => setSelectedActivity(activity)}
-                store={activity.estabelecimentos?.nome || 'Estabelecimento'}
-                status={activity.status.charAt(0).toUpperCase() + activity.status.slice(1).replace('_', ' ')}
-                driver={activity.perfis?.nome || 'Pendente'}
-                time={formatTime(activity.criado_at)}
+                activity={activity}
+                isExpanded={expandedId === activity.id}
+                onToggle={() => toggleExpand(activity.id)}
                 color={getStatusColor(activity.status)}
-                address={formatAddress(activity)}
               />
             ))
           )}
@@ -300,84 +304,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
         </div>
       )}
 
-      {/* Detail Modal */}
-      {selectedActivity && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fade" onClick={() => setSelectedActivity(null)}>
-          <div className="w-full max-w-xl bg-[#0A0A0A] rounded-t-[3rem] border-t border-white/5 p-8 pb-12 overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
-            <div className="w-12 h-1.5 bg-gray-900 rounded-full mx-auto mb-8"></div>
 
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h2 className="text-2xl font-black text-white tracking-tighter uppercase">{selectedActivity.estabelecimentos?.nome}</h2>
-                <div className="flex items-center gap-2 mt-2">
-                  <div className={`w-2 h-2 rounded-full ${getStatusColor(selectedActivity.status).replace('text-', 'bg-')} shadow-lg`}></div>
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{selectedActivity.status.replace('_', ' ')}</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Valor Entrega</p>
-                <p className="text-2xl font-black text-white">R$ {parseFloat(selectedActivity.valor_total).toFixed(2)}</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
-                <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em] mb-4">📍 Detalhes do Destino</h3>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-1">Cliente / Destinatário</p>
-                    <p className="text-sm font-black text-white uppercase tracking-tight">{formatClientName(selectedActivity)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-1">Endereço de Entrega</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedActivity)}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
-                <h3 className="text-[10px] font-black text-orange-primary uppercase tracking-[0.2em] mb-4">🏪 Dados da Coleta</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Estabelecimento</p>
-                    <p className="text-[11px] text-white font-bold">{selectedActivity.estabelecimentos?.nome || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Endereço da Loja</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{selectedActivity.estabelecimentos?.endereco || 'Endereço não informado'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
-                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">📝 Informações Adicionais</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Observações / WhatsApp</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed whitespace-pre-wrap italic">
-                      {selectedActivity.observacao?.replace('Extraída do WhatsApp: ', '') || 'Sem observações'}
-                    </p>
-                  </div>
-                  <div className="pt-3 border-t border-white/5 flex justify-between items-center">
-                    <div>
-                      <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Entregador</p>
-                      <p className="text-[11px] text-gray-300 font-medium">{selectedActivity.perfis?.nome || 'Não Atribuído'}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest mb-0.5">Lucro Admin</p>
-                      <p className="text-[11px] text-lime-500 font-bold">R$ {parseFloat(selectedActivity.lucro_admin || '0').toFixed(2)}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button onClick={() => setSelectedActivity(null)} className="w-full h-14 bg-white/5 text-gray-600 rounded-2xl text-[10px] font-black uppercase tracking-widest">
-                Fechar Detalhes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal de Novo Cliente */}
       {showNewClientForm && (
@@ -404,27 +331,70 @@ const QuickAction = ({ icon, label, active, onClick }: any) => (
   </button>
 );
 
-const ActivityItem = ({ store, status, time, color, driver, address, onClick }: any) => (
-  <div onClick={onClick} className="glass-card p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-white/10 transition-colors">
-    <div className="flex items-center gap-4 flex-1">
-      <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40 shrink-0"></div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <h4 className="text-xs font-black tracking-tight truncate">{store}</h4>
-          <span className="text-[9px] font-bold text-gray-700 shrink-0 ml-2">{time}</span>
+const ActivityItem = ({ activity, isExpanded, onToggle, color }: any) => {
+  const store = activity.estabelecimentos?.nome || 'Estabelecimento';
+  const status = activity.status.charAt(0).toUpperCase() + activity.status.slice(1).replace('_', ' ');
+  const driver = activity.perfis?.nome || 'Pendente';
+  const time = formatTime(activity.criado_at);
+  const address = formatAddress(activity);
+
+  return (
+    <div className={`glass-card p-4 rounded-2xl border-white/5 bg-white/[0.02] transition-all duration-300 ${isExpanded ? 'ring-1 ring-white/10' : ''}`}>
+      <div onClick={onToggle} className="flex items-center justify-between cursor-pointer group">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40 shrink-0"></div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-black tracking-tight truncate">{store}</h4>
+              <span className="text-[9px] font-bold text-gray-700 shrink-0 ml-2">{time}</span>
+            </div>
+            <p className="text-[10px] text-gray-500 font-medium truncate mt-0.5 leading-tight">{address || 'Sem endereço'}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className={`text-[8px] font-black uppercase tracking-widest ${color}`}>{status}</p>
+              <span className="text-[10px] text-gray-800 shrink-0">•</span>
+              <p className="text-[8px] font-bold text-gray-600 uppercase tracking-tighter truncate">{driver}</p>
+            </div>
+          </div>
         </div>
-        <p className="text-[10px] text-gray-500 font-medium truncate mt-0.5 leading-tight">{address || 'Sem endereço'}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <p className={`text-[8px] font-black uppercase tracking-widest ${color}`}>{status}</p>
-          <span className="text-[10px] text-gray-800 shrink-0">•</span>
-          <p className="text-[8px] font-bold text-gray-600 uppercase tracking-tighter truncate">{driver}</p>
+        <div className="ml-3 shrink-0 flex items-center gap-2">
+          <p className="text-xs font-black text-white">R$ {parseFloat(activity.valor_total).toFixed(2)}</p>
+          <ChevronRight size={14} className={`text-gray-800 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+        </div>
+      </div>
+
+      <div className={`expandable-content ${isExpanded ? 'expanded' : ''}`}>
+        <div className="expandable-inner pt-4 space-y-4">
+          <div className="h-px bg-white/5 w-full"></div>
+          <div className="grid grid-cols-1 gap-3 text-[9px] font-bold uppercase tracking-widest">
+            <div>
+              <p className="text-gray-700 text-[7px] mb-1">Cliente / Destinatário</p>
+              <p className="text-gray-300 text-xs">{formatClientName(activity)}</p>
+            </div>
+            <div>
+              <p className="text-gray-700 text-[7px] mb-1">Endereço de Entrega</p>
+              <p className="text-gray-300 text-[10px] leading-relaxed normal-case">{address}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-gray-700 text-[7px] mb-1">Estabelecimento</p>
+                <p className="text-gray-300 text-[10px] leading-relaxed">{activity.estabelecimentos?.nome}</p>
+              </div>
+              <div>
+                <p className="text-gray-700 text-[7px] mb-1">Lucro Admin</p>
+                <p className="text-lime-500 text-[10px]">R$ {parseFloat(activity.lucro_admin || '0').toFixed(2)}</p>
+              </div>
+            </div>
+            {activity.observacao && (
+              <div>
+                <p className="text-gray-700 text-[7px] mb-1">Observações</p>
+                <p className="text-orange-primary/70 italic normal-case text-[10px]">{activity.observacao.replace('Extraída do WhatsApp: ', '')}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
-    <div className="ml-3 shrink-0">
-      <ChevronRight size={14} className="text-gray-800" />
-    </div>
-  </div>
-);
+  );
+};
 
 export default AdminDashboard;
