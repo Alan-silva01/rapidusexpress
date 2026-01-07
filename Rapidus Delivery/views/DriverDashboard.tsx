@@ -20,6 +20,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
   const [activeDeliveries, setActiveDeliveries] = useState<any[]>([]);
   const [historyDeliveries, setHistoryDeliveries] = useState<any[]>([]);
   const [todayDeliveries, setTodayDeliveries] = useState<any[]>([]);
+  const [totalEarned, setTotalEarned] = useState(0);
   const [selectedDelivery, setSelectedDelivery] = useState<any | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -85,6 +86,10 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
 
       setHistoryDeliveries(finalizadas.slice(0, 20));
       setTodayDeliveries(hojeOnly);
+
+      // Calcular ganho total acumulado (soma de todas as finalizadas)
+      const total = finalizadas.reduce((acc, curr) => acc + parseFloat(profile.funcao === 'admin' ? curr.valor_total : curr.valor_entregador), 0);
+      setTotalEarned(total);
     } catch (err) {
       console.error('Erro ao buscar entregas:', err);
     } finally {
@@ -333,7 +338,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       <div className="grid grid-cols-2 gap-4">
         <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
           <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">{profile.funcao === 'admin' ? 'Seus Ganhos Totais' : 'Saldo para Receber'}</p>
-          <p className="text-xl font-black text-white tracking-tighter">R$ {parseFloat(driverProfile.saldo?.toString() || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xl font-black text-white tracking-tighter">R$ {(profile.funcao === 'admin' ? totalEarned : parseFloat(driverProfile.saldo?.toString() || '0')).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
           {profile.funcao !== 'admin' && <p className="text-[8px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">Disponível para saque</p>}
         </div>
         <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
