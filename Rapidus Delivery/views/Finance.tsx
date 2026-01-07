@@ -11,6 +11,7 @@ interface FinanceProps {
 const Finance: React.FC<FinanceProps> = ({ profile }) => {
   const [resumoStores, setResumoStores] = useState<any[]>([]);
   const [resumoDrivers, setResumoDrivers] = useState<any[]>([]);
+  const [allProfiles, setAllProfiles] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [stats, setStats] = useState({
     comissoes: 0,
@@ -48,6 +49,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
     try {
       const { data: stores } = await supabase.from('v_resumo_estabelecimentos').select('*');
       const { data: drivers } = await supabase.from('v_resumo_entregadores').select('*');
+      const { data: profiles } = await supabase.from('perfis').select('id, nome');
+      setAllProfiles(profiles || []);
 
       // 1. Ganhos do Admin (Comissões + Próprio)
       const { data: globalStats } = await supabase
@@ -58,8 +61,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
         .lte('criado_at', `${endDate}T23:59:59Z`);
 
       const myDeliveries = globalStats?.filter(d => d.entregador_id === profile.id) || [];
-      const proprio = myDeliveries.reduce((acc, curr) => acc + (profile.funcao === 'admin' ? curr.valor_total : curr.valor_entregador), 0) || 0;
-      const comissoes = globalStats?.filter(d => d.entregador_id !== profile.id).reduce((acc, curr) => acc + (curr.lucro_admin || 0), 0) || 0;
+      const proprio = myDeliveries.reduce((acc, curr) => acc + Number(profile.funcao === 'admin' ? curr.valor_total : curr.valor_entregador), 0) || 0;
+      const comissoes = globalStats?.filter(d => d.entregador_id !== profile.id).reduce((acc, curr) => acc + Number(curr.lucro_admin || 0), 0) || 0;
 
       // 2. Fluxo de Caixa (Transações no período)
       const { data: txs } = await supabase
@@ -69,28 +72,31 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
         .lte('data_transacao', `${endDate}T23:59:59Z`)
         .order('data_transacao', { ascending: false });
 
-      const recebido = txs?.filter(t => t.tipo === 'recebimento_estabelecimento').reduce((acc, curr) => acc + (curr.valor || 0), 0) || 0;
-      const pago = txs?.filter(t => t.tipo === 'pagamento_entregador').reduce((acc, curr) => acc + (curr.valor || 0), 0) || 0;
+      const recebido = txs?.filter(t => t.tipo === 'recebimento_estabelecimento')
+        .reduce((acc, curr) => acc + Number(curr.valor || 0), 0) || 0;
+
+      const pago = txs?.filter(t => t.tipo === 'pagamento_entregador')
+        .reduce((acc, curr) => acc + Number(curr.valor || 0), 0) || 0;
 
       setStats({ comissoes, proprio, recebido, pago });
 
       // 3. Enriquecer os resumos com dados do período
       const storesEnriched = (stores || []).map(s => {
         const periodReceived = txs?.filter(t => t.entidade_id === s.id && t.tipo === 'recebimento_estabelecimento')
-          .reduce((acc, curr) => acc + (curr.valor || 0), 0) || 0;
+          .reduce((acc, curr) => acc + Number(curr.valor || 0), 0) || 0;
         const periodDeliveries = globalStats?.filter(d => d.estabelecimento_id === s.id).length || 0;
         return { ...s, periodReceived, periodDeliveries };
       });
 
       const driversEnriched = (drivers || []).map(d => {
         const periodPaid = txs?.filter(t => t.entidade_id === d.id && t.tipo === 'pagamento_entregador')
-          .reduce((acc, curr) => acc + (curr.valor || 0), 0) || 0;
+          .reduce((acc, curr) => acc + Number(curr.valor || 0), 0) || 0;
         const periodDeliveries = globalStats?.filter(delivery => delivery.entregador_id === d.id).length || 0;
         return { ...d, periodPaid, periodDeliveries };
       });
 
-      const globalReceivables = (stores || []).reduce((acc, s) => acc + (s.saldo_faltante || 0), 0);
-      const globalPayables = (drivers || []).reduce((acc, d) => acc + (d.saldo_a_pagar || 0), 0);
+      const globalReceivables = (stores || []).reduce((acc, s) => acc + Number(s.saldo_faltante || 0), 0);
+      const globalPayables = (drivers || []).reduce((acc, d) => acc + Number(d.saldo_a_pagar || 0), 0);
 
       setResumoStores(storesEnriched);
       setResumoDrivers(driversEnriched);
@@ -272,9 +278,12 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
 
             {profile?.funcao === 'admin' && (
               <>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Lojas em Aberto</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-3 bg-lime-500 rounded-full" />
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Lojas em Aberto</h3>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     {resumoStores
@@ -294,8 +303,13 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Pendências Motoboys</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-3 bg-orange-primary rounded-full" />
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Pendências Motoboys</h3>
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     {resumoDrivers
                       .filter(d => d.nome.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -344,8 +358,9 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                         entidade={
                           tx.tipo === 'recebimento_estabelecimento'
                             ? resumoStores.find(s => s.id === tx.entidade_id)?.nome || 'Loja'
-                            : resumoDrivers.find(d => d.id === tx.entidade_id)?.nome || 'Motoboy'
+                            : allProfiles.find(p => p.id === tx.entidade_id)?.nome || 'Usuário'
                         }
+                        isAdmin={profile.funcao === 'admin'}
                       />
                     ))
                   )}
@@ -432,24 +447,30 @@ const FinanceRow = ({ title, subtitle, value, orange, onClick, periodLabel, peri
   </div>
 );
 
-const TransactionRow = ({ entidade, valor, tipo, data, metodo, obs }: any) => (
-  <div className="glass-card p-4 rounded-3xl flex items-baseline justify-between border-white/[0.03] bg-white/[0.01]">
-    <div className="flex items-start gap-3">
-      <div className={`mt-1 w-2 h-2 rounded-full ${tipo === 'recebimento_estabelecimento' ? 'bg-lime-500 shadow-[0_0_8px_rgba(132,204,22,0.4)]' : 'bg-orange-primary shadow-[0_0_8px_rgba(255,77,0,0.4)]'}`} />
-      <div>
-        <h4 className="text-[12px] font-black tracking-tight text-gray-200">{entidade}</h4>
-        <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest leading-none mt-1">
-          {new Date(data).toLocaleDateString('pt-BR')} • {metodo}
+const TransactionRow = ({ entidade, valor, tipo, data, metodo, obs, isAdmin }: any) => {
+  const isGain = tipo === 'recebimento_estabelecimento';
+  const isVirtual = tipo === 'ganho_entrega';
+
+  return (
+    <div className={`glass-card p-4 rounded-3xl flex items-baseline justify-between border-white/[0.03] ${isVirtual ? 'bg-white/[0.01] opacity-60' : 'bg-white/[0.01]'}`}>
+      <div className="flex items-start gap-3">
+        <div className={`mt-1 w-2 h-2 rounded-full ${isGain ? 'bg-lime-500 shadow-[0_0_8px_rgba(132,204,22,0.4)]' : isVirtual ? 'bg-sky-500' : 'bg-orange-primary shadow-[0_0_8px_rgba(255,77,0,0.4)]'}`} />
+        <div>
+          <h4 className="text-[12px] font-black tracking-tight text-gray-200">{entidade}</h4>
+          <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest leading-none mt-1">
+            {new Date(data).toLocaleDateString('pt-BR')} • {isVirtual ? 'Saldo App' : metodo}
+          </p>
+          {obs && <p className="text-[9px] text-gray-500 italic mt-2 border-l border-white/5 pl-2">"{obs}"</p>}
+        </div>
+      </div>
+      <div className="text-right">
+        <p className={`text-[13px] font-black tracking-tighter ${isGain ? 'text-lime-500' : isVirtual ? 'text-sky-400' : 'text-orange-primary'}`}>
+          {isVirtual ? '' : isGain ? '+' : '-'} R$ {parseFloat(valor).toFixed(2)}
         </p>
-        {obs && <p className="text-[9px] text-gray-500 italic mt-2 border-l border-white/5 pl-2">"{obs}"</p>}
+        {isVirtual && <span className="text-[7px] font-black text-sky-900 uppercase">Virtual</span>}
       </div>
     </div>
-    <div className="text-right">
-      <p className={`text-[13px] font-black tracking-tighter ${tipo === 'recebimento_estabelecimento' ? 'text-lime-500' : 'text-orange-primary'}`}>
-        {tipo === 'recebimento_estabelecimento' ? '+' : '-'} R$ {parseFloat(valor).toFixed(2)}
-      </p>
-    </div>
-  </div>
-);
+  );
+};
 
 export default Finance;
