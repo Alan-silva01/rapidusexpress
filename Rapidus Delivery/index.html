@@ -85,6 +85,23 @@
     .animate-fade {
       animation: fadeIn 0.4s ease-out forwards;
     }
+
+    .expandable-content {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.3s ease-out, opacity 0.3s ease-out;
+      opacity: 0;
+    }
+
+    .expandable-content.expanded {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      margin-top: 1rem;
+    }
+
+    .expandable-inner {
+      overflow: hidden;
+    }
   </style>
   <script type="importmap">
 {

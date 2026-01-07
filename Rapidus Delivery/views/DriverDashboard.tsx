@@ -21,6 +21,11 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
   const [historyDeliveries, setHistoryDeliveries] = useState<any[]>([]);
   const [todayDeliveries, setTodayDeliveries] = useState<any[]>([]);
   const [selectedDelivery, setSelectedDelivery] = useState<any | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpand = (id: string) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
 
   useEffect(() => {
     fetchDriverData();
@@ -237,51 +242,56 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
               <div className="space-y-3">
                 {activeDeliveries.map(task => {
                   const info = getStatusInfo(task.status, task.estabelecimentos?.nome, task.nome_cliente || 'Cliente');
+                  const isExpanded = expandedId === task.id;
+
                   return (
-                    <div key={task.id} className="glass-card p-5 rounded-3xl border-white/5 relative overflow-hidden">
-                      <div onClick={() => setSelectedDelivery(task)} className="flex items-center gap-4 mb-5 cursor-pointer">
+                    <div key={task.id} className={`glass-card p-5 rounded-3xl border-white/5 relative overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-1 ring-orange-primary/30' : ''}`}>
+                      <div onClick={() => toggleExpand(task.id)} className="flex items-center gap-4 cursor-pointer">
                         <div className="w-10 h-10 bg-orange-primary/10 rounded-xl flex items-center justify-center text-orange-primary">
                           {info.icon}
                         </div>
                         <div className="flex-1">
                           <h4 className="text-sm font-black tracking-tight text-white">{task.estabelecimentos?.nome}</h4>
                           <p className="text-[10px] font-black uppercase tracking-widest text-orange-primary mt-0.5">{info.label}</p>
-                          <p className="text-[8px] text-gray-500 mt-1 uppercase font-bold italic">{info.sub}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-black text-white">R$ {parseFloat(task.valor_entregador).toFixed(2)}</p>
-                          <span className="text-[8px] font-black text-orange-primary uppercase tracking-widest">Detalhes</span>
+                          <ChevronRight size={14} className={`text-gray-700 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-orange-primary' : ''}`} />
                         </div>
                       </div>
 
-                      <div className="bg-black/20 p-4 rounded-2xl mb-4 text-[10px] text-gray-400 font-medium space-y-2 border border-white/5">
-                        <p><span className="text-gray-600 uppercase font-black tracking-widest text-[8px]">Coleta:</span> {formatAddress(task.estabelecimentos?.endereco)}</p>
-                        <p><span className="text-lime-500 uppercase font-black tracking-widest text-[8px]">Entrega:</span> {formatAddress(task.endereco_cliente)}</p>
-                        {task.observacao && (
-                          <p className="bg-orange-primary/5 p-2 rounded-lg mt-1 border border-orange-primary/10 italic text-gray-300">
-                            <span className="text-orange-primary uppercase font-black tracking-widest text-[8px] not-italic mr-1">Obs:</span>
-                            {formatObservation(task.observacao)}
-                          </p>
-                        )}
+                      <div className={`expandable-content ${isExpanded ? 'expanded' : ''}`}>
+                        <div className="expandable-inner space-y-4">
+                          <div className="bg-black/20 p-4 rounded-2xl text-[10px] text-gray-400 font-medium space-y-2 border border-white/5">
+                            <p><span className="text-gray-600 uppercase font-black tracking-widest text-[8px]">Coleta:</span> {formatAddress(task.estabelecimentos?.endereco)}</p>
+                            <p><span className="text-lime-500 uppercase font-black tracking-widest text-[8px]">Entrega:</span> {formatAddress(task.endereco_cliente)}</p>
+                            {task.observacao && (
+                              <p className="bg-orange-primary/5 p-2 rounded-lg mt-1 border border-orange-primary/10 italic text-gray-300">
+                                <span className="text-orange-primary uppercase font-black tracking-widest text-[8px] not-italic mr-1">Obs:</span>
+                                {formatObservation(task.observacao)}
+                              </p>
+                            )}
+                          </div>
+
+                          {task.status === 'em_rota' && (
+                            <button onClick={(e) => { e.stopPropagation(); handleAction('collect', task.id); }} className="w-full h-12 bg-orange-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-primary/20">
+                              {processing ? <Loader2 className="animate-spin" size={14} /> : <PackageCheck size={14} />} Confirmar Coleta na Loja
+                            </button>
+                          )}
+
+                          {task.status === 'coletada' && (
+                            <button onClick={(e) => { e.stopPropagation(); handleAction('finish', task.id); }} className="w-full h-12 bg-lime-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-lime-500/20">
+                              {processing ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />} Entrega Concluída
+                            </button>
+                          )}
+
+                          {task.status === 'em_rota' && (
+                            <button onClick={(e) => { e.stopPropagation(); handleAction('reject', task.id); }} className="w-full h-10 bg-white/5 text-gray-600 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">
+                              Desistir da Entrega
+                            </button>
+                          )}
+                        </div>
                       </div>
-
-                      {task.status === 'em_rota' && (
-                        <button onClick={() => handleAction('collect', task.id)} className="w-full h-12 bg-orange-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-primary/20">
-                          {processing ? <Loader2 className="animate-spin" size={14} /> : <PackageCheck size={14} />} Confirmar Coleta na Loja
-                        </button>
-                      )}
-
-                      {task.status === 'coletada' && (
-                        <button onClick={() => handleAction('finish', task.id)} className="w-full h-12 bg-lime-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-lime-500/20">
-                          {processing ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />} Entrega Concluída
-                        </button>
-                      )}
-
-                      {task.status === 'em_rota' && (
-                        <button onClick={() => handleAction('reject', task.id)} className="mt-3 w-full h-10 bg-white/5 text-gray-600 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">
-                          Desistir da Entrega
-                        </button>
-                      )}
                     </div>
                   );
                 })}
@@ -318,22 +328,50 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
             </button>
           </div>
           <div className="space-y-2">
-            {historyDeliveries.map(delivery => (
-              <div key={delivery.id} className="glass-card p-4 rounded-2xl flex items-center justify-between border-white/5 bg-white/[0.02]">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center text-gray-600">
-                    <CheckCircle2 size={16} className="text-lime-500" />
+            {historyDeliveries.map(delivery => {
+              const isExpanded = expandedId === delivery.id;
+              return (
+                <div key={delivery.id} className={`glass-card p-4 rounded-2xl border-white/5 bg-white/[0.02] transition-all duration-300 ${isExpanded ? 'ring-1 ring-white/10' : ''}`}>
+                  <div onClick={() => toggleExpand(delivery.id)} className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center text-gray-600">
+                        <CheckCircle2 size={16} className="text-lime-500" />
+                      </div>
+                      <div>
+                        <h4 className="text-[11px] font-bold text-gray-300">{delivery.estabelecimentos?.nome}</h4>
+                        <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">{new Date(delivery.criado_at).toLocaleDateString('pt-BR')} • {new Date(delivery.criado_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                      </div>
+                    </div>
+                    <div className="text-right flex items-center gap-2">
+                      <p className="text-xs font-black text-white">R$ {parseFloat(delivery.valor_entregador).toFixed(2)}</p>
+                      <ChevronRight size={10} className={`text-gray-800 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-[11px] font-bold text-gray-300">{delivery.estabelecimentos?.nome}</h4>
-                    <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">{new Date(delivery.criado_at).toLocaleDateString('pt-BR')} • {new Date(delivery.criado_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+
+                  <div className={`expandable-content ${isExpanded ? 'expanded' : ''}`}>
+                    <div className="expandable-inner pt-2 space-y-3">
+                      <div className="h-px bg-white/5 w-full"></div>
+                      <div className="grid grid-cols-1 gap-2 text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+                        <div>
+                          <p className="text-gray-700 text-[7px] mb-0.5">Destinatário</p>
+                          <p className="text-gray-300">{delivery.nome_cliente || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-700 text-[7px] mb-0.5">Endereço de Entrega</p>
+                          <p className="text-gray-300 leading-relaxed">{formatAddress(delivery.endereco_cliente)}</p>
+                        </div>
+                        {delivery.observacao && (
+                          <div>
+                            <p className="text-gray-700 text-[7px] mb-0.5">Observações</p>
+                            <p className="text-orange-primary/70 italic normal-case">{formatObservation(delivery.observacao)}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs font-black text-white">R$ {parseFloat(delivery.valor_entregador).toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

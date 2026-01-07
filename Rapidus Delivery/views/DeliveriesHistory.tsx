@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { Search, Calendar, ChevronLeft, Loader2, Package } from 'lucide-react';
+import { Search, Calendar, ChevronLeft, Loader2, Package, ChevronRight, CheckCircle2 } from 'lucide-react';
 
 interface DeliveriesHistoryProps {
     profileId: string;
@@ -13,6 +13,11 @@ const DeliveriesHistory: React.FC<DeliveriesHistoryProps> = ({ profileId, onBack
     const [dateStart, setDateStart] = useState('');
     const [dateEnd, setDateEnd] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    const toggleExpand = (id: string) => {
+        setExpandedId(expandedId === id ? null : id);
+    };
 
     useEffect(() => {
         fetchHistory();
@@ -105,19 +110,56 @@ const DeliveriesHistory: React.FC<DeliveriesHistoryProps> = ({ profileId, onBack
                         <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{deliveries.length} Entregas</span>
                         <span className="text-[9px] font-black text-lime-500 uppercase tracking-widest">Total: R$ {deliveries.reduce((acc, curr) => acc + parseFloat(curr.valor_entregador), 0).toFixed(2)}</span>
                     </div>
-                    {deliveries.map(delivery => (
-                        <div key={delivery.id} className="glass-card p-4 rounded-2xl flex items-center justify-between">
-                            <div>
-                                <h4 className="text-xs font-black tracking-tight">{delivery.estabelecimentos?.nome}</h4>
-                                <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-0.5">
-                                    {new Date(delivery.criado_at).toLocaleDateString('pt-BR')} • {delivery.nome_cliente || 'Cliente'}
-                                </p>
+                    {deliveries.map(delivery => {
+                        const isExpanded = expandedId === delivery.id;
+                        return (
+                            <div key={delivery.id} className={`glass-card p-4 rounded-2xl border-white/5 bg-white/[0.02] transition-all duration-300 ${isExpanded ? 'ring-1 ring-white/10' : ''}`}>
+                                <div onClick={() => toggleExpand(delivery.id)} className="flex items-center justify-between cursor-pointer">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center text-gray-600">
+                                            <Package size={16} className="text-orange-primary/50" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-black tracking-tight">{delivery.estabelecimentos?.nome}</h4>
+                                            <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-0.5">
+                                                {new Date(delivery.criado_at).toLocaleDateString('pt-BR')} • {delivery.nome_cliente || 'Cliente'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right flex items-center gap-2">
+                                        <p className="text-sm font-black tracking-tighter text-white">R$ {parseFloat(delivery.valor_entregador).toFixed(2)}</p>
+                                        <ChevronRight size={12} className={`text-gray-800 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-orange-primary' : ''}`} />
+                                    </div>
+                                </div>
+
+                                <div className={`expandable-content ${isExpanded ? 'expanded' : ''}`}>
+                                    <div className="expandable-inner pt-2 space-y-3">
+                                        <div className="h-px bg-white/5 w-full"></div>
+                                        <div className="grid grid-cols-1 gap-3 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                                            <div>
+                                                <p className="text-gray-700 text-[8px] mb-1">📅 Data e Hora</p>
+                                                <p className="text-gray-300">{new Date(delivery.criado_at).toLocaleString('pt-BR')}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-700 text-[8px] mb-1">🏠 Endereço de Coleta</p>
+                                                <p className="text-gray-300 leading-relaxed normal-case font-medium">{delivery.estabelecimentos?.endereco || 'Não informado'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-700 text-[8px] mb-1">📍 Endereço de Entrega</p>
+                                                <p className="text-gray-300 leading-relaxed normal-case font-medium">{delivery.endereco_cliente || 'Não informado'}</p>
+                                            </div>
+                                            {delivery.observacao && (
+                                                <div>
+                                                    <p className="text-gray-700 text-[8px] mb-1">📝 Observações</p>
+                                                    <p className="text-orange-primary/70 italic normal-case font-medium">{delivery.observacao.replace('Extraída do WhatsApp: ', '')}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="text-right">
-                                <p className="text-sm font-black tracking-tighter text-white">R$ {parseFloat(delivery.valor_entregador).toFixed(2)}</p>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>
