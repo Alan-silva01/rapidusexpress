@@ -22,6 +22,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Filtros
   const [tipo, setTipo] = useState<'recebimento_estabelecimento' | 'pagamento_entregador'>('recebimento_estabelecimento');
@@ -47,7 +48,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
       // 1. Ganhos do Admin (Comissões + Próprio)
       const { data: globalStats } = await supabase
         .from('entregas')
-        .select('valor_total, valor_entregador, lucro_admin, entregador_id')
+        .select('valor_total, valor_entregador, lucro_admin, entregador_id, estabelecimento_id')
         .eq('status', 'finalizada')
         .gte('criado_at', `${startDate}T00:00:00Z`)
         .lte('criado_at', `${endDate}T23:59:59Z`);
@@ -67,8 +68,24 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
       const pago = txs?.filter(t => t.tipo === 'pagamento_entregador').reduce((acc, curr) => acc + (curr.valor || 0), 0) || 0;
 
       setStats({ comissoes, proprio, recebido, pago });
-      setResumoStores(stores || []);
-      setResumoDrivers(drivers || []);
+
+      // 3. Enriquecer os resumos com dados do período
+      const storesEnriched = (stores || []).map(s => {
+        const periodReceived = txs?.filter(t => t.entidade_id === s.id && t.tipo === 'recebimento_estabelecimento')
+          .reduce((acc, curr) => acc + (curr.valor || 0), 0) || 0;
+        const periodDeliveries = globalStats?.filter(d => d.estabelecimento_id === s.id).length || 0;
+        return { ...s, periodReceived, periodDeliveries };
+      });
+
+      const driversEnriched = (drivers || []).map(d => {
+        const periodPaid = txs?.filter(t => t.entidade_id === d.id && t.tipo === 'pagamento_entregador')
+          .reduce((acc, curr) => acc + (curr.valor || 0), 0) || 0;
+        const periodDeliveries = globalStats?.filter(delivery => delivery.entregador_id === d.id).length || 0;
+        return { ...d, periodPaid, periodDeliveries };
+      });
+
+      setResumoStores(storesEnriched);
+      setResumoDrivers(driversEnriched);
       setTransactions(txs || []);
     } catch (err) {
       console.error(err);
@@ -194,40 +211,64 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
           </section>
 
           <section className="space-y-6">
+            <div className="flex items-center gap-2 px-1">
+              <div className="flex-1 bg-white/5 rounded-2xl h-12 flex items-center px-4 gap-3 border border-white/5">
+                <Search size={16} className="text-gray-700" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  placeholder="Buscar loja ou motoboy..."
+                  className="bg-transparent text-xs font-bold text-white outline-none w-full placeholder:text-gray-800"
+                />
+              </div>
+            </div>
+
             <div className="space-y-3">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Lojas em Aberto</h3>
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Lojas em Aberto</h3>
+                {startDate && <span className="text-[8px] font-black text-lime-500 uppercase tracking-widest bg-lime-500/10 px-2 py-0.5 rounded-full">Filtrado</span>}
+              </div>
               <div className="space-y-2">
-                {resumoStores.map(store => (
-                  <FinanceRow
-                    key={store.id}
-                    title={store.nome}
-                    subtitle={`${store.total_entregas || 0} entregas totais`}
-                    value={store.saldo_faltante || 0}
-                    orange={(store.saldo_faltante || 0) > 0}
-                    onClick={() => openPaymentModal(store.id, 'recebimento_estabelecimento', store.saldo_faltante)}
-                  />
-                ))}
+                {resumoStores
+                  .filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map(store => (
+                    <FinanceRow
+                      key={store.id}
+                      title={store.nome}
+                      subtitle={`${store.total_entregas || 0} entregas totais`}
+                      value={store.saldo_faltante || 0}
+                      orange={(store.saldo_faltante || 0) > 0}
+                      periodLabel="Recebido"
+                      periodValue={store.periodReceived}
+                      onClick={() => openPaymentModal(store.id, 'recebimento_estabelecimento', store.saldo_faltante)}
+                    />
+                  ))}
               </div>
             </div>
 
             <div className="space-y-3">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Pendências Motoboys</h3>
               <div className="space-y-2">
-                {resumoDrivers.map(driver => (
-                  <FinanceRow
-                    key={driver.id}
-                    title={driver.nome}
-                    subtitle="Dívida acumulada"
-                    value={driver.saldo_a_pagar || 0}
-                    orange={(driver.saldo_a_pagar || 0) > 0}
-                    onClick={() => openPaymentModal(driver.id, 'pagamento_entregador', driver.saldo_a_pagar)}
-                  />
-                ))}
+                {resumoDrivers
+                  .filter(d => d.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map(driver => (
+                    <FinanceRow
+                      key={driver.id}
+                      title={driver.nome}
+                      subtitle="Dívida acumulada"
+                      value={driver.saldo_a_pagar || 0}
+                      orange={(driver.saldo_a_pagar || 0) > 0}
+                      periodLabel="Pago"
+                      periodValue={driver.periodPaid}
+                      onClick={() => openPaymentModal(driver.id, 'pagamento_entregador', driver.saldo_a_pagar)}
+                    />
+                  ))}
               </div>
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Histórico Recente</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 px-1">Histórico de Transações</h3>
               <div className="space-y-2">
                 {transactions.length === 0 ? (
                   <div className="glass-card p-10 text-center border-dashed border-white/5">
@@ -305,7 +346,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
   );
 };
 
-const FinanceRow = ({ title, subtitle, value, orange, onClick }: any) => (
+const FinanceRow = ({ title, subtitle, value, orange, onClick, periodLabel, periodValue }: any) => (
   <div onClick={onClick} className="glass-card p-4 rounded-3xl flex items-center justify-between group active:scale-[0.98] transition-all cursor-pointer border border-white/[0.03] hover:border-white/10">
     <div className="flex items-center gap-3">
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${orange ? 'bg-orange-primary/5 text-orange-primary' : 'bg-lime-500/5 text-lime-500'}`}>
@@ -313,7 +354,14 @@ const FinanceRow = ({ title, subtitle, value, orange, onClick }: any) => (
       </div>
       <div>
         <h4 className="text-[13px] font-black tracking-tight text-white">{title}</h4>
-        <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest mt-0.5">{subtitle}</p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest">{subtitle}</p>
+          {periodValue > 0 && (
+            <span className="text-[8px] font-black px-1.5 py-0.5 rounded-md bg-white/5 text-gray-500">
+              {periodLabel}: R$ {periodValue.toFixed(2)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
     <div className="text-right">
