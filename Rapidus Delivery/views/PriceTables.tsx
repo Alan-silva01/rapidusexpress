@@ -133,7 +133,7 @@ const PriceTables: React.FC<PriceTablesProps> = ({ onBack }) => {
     );
 
     return (
-        <div className="space-y-6 pb-40 animate-fade">
+        <div className="space-y-6 pb-64 animate-fade">
             <header className="flex items-center gap-4">
                 <button onClick={onBack} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400">
                     <ArrowLeft size={20} />
@@ -235,7 +235,7 @@ const PriceTables: React.FC<PriceTablesProps> = ({ onBack }) => {
 
             {/* Botão Fixo Salvar */}
             {!loading && data.length > 0 && (
-                <div className="fixed bottom-28 left-0 right-0 px-6 py-4 bg-gradient-to-t from-black via-black to-transparent z-[100]">
+                <div className="fixed bottom-24 left-0 right-0 px-6 py-4 bg-gradient-to-t from-black via-black to-transparent z-[100]">
                     <button
                         onClick={saveChanges}
                         disabled={saving}
