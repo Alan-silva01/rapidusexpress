@@ -174,10 +174,16 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess }) =>
                         </div>
                       </div>
 
-                      <div className="space-y-2 mb-5">
-                        <div className="flex items-center gap-2 text-gray-500">
-                          <MapPin size={12} className="text-orange-primary" />
-                          <p className="text-[10px] font-bold">{delivery.endereco_cliente.join(', ')}</p>
+                      <div className="space-y-4 mb-6">
+                        <div className="bg-black/20 p-4 rounded-2xl space-y-3 border border-white/5">
+                          <div>
+                            <p className="text-[8px] text-lime-500 font-black uppercase tracking-widest mb-1">📍 Endereço de Entrega</p>
+                            <p className="text-[11px] text-gray-300 font-bold leading-tight">{delivery.endereco_cliente.join(', ') || 'N/A'}</p>
+                          </div>
+                          <div className="pt-2 border-t border-white/5">
+                            <p className="text-[8px] text-orange-primary font-black uppercase tracking-widest mb-1">🏠 Retirada na Loja</p>
+                            <p className="text-[10px] text-gray-500 font-medium leading-tight">{store.endereco || store.nome}</p>
+                          </div>
                         </div>
                       </div>
 
