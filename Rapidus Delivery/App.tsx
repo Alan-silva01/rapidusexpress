@@ -13,6 +13,7 @@ import { Layout } from './components/Layout';
 
 import DeliveriesHistory from './views/DeliveriesHistory';
 import PriceTables from './views/PriceTables';
+import InstallPrompt from './components/InstallPrompt';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -314,6 +315,7 @@ const App: React.FC = () => {
       onLogout={handleLogout}
     >
       {renderContent()}
+      <InstallPrompt />
     </Layout>
   );
 };
