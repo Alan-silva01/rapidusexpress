@@ -50,8 +50,8 @@ const Login: React.FC = () => {
 
       <div className="w-full max-w-sm z-10 animate-fade">
         <div className="text-center mb-12">
-          <div className="inline-flex w-14 h-14 bg-orange-primary rounded-2xl items-center justify-center shadow-2xl shadow-orange-primary/40 mb-6 rotate-3">
-            <span className="text-xl font-black text-white">R</span>
+          <div className="inline-flex w-16 h-16 rounded-2xl items-center justify-center shadow-2xl shadow-orange-primary/40 mb-6 overflow-hidden">
+            <img src="/icons/icon-192.jpg" alt="Rapidus Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-2xl font-black tracking-tighter mb-1 uppercase">Rapidus</h1>
           <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.3em]">Smart Delivery System</p>
