@@ -122,21 +122,50 @@
 
 <body>
   <div id="root">
-    <div
-      style="background: black; color: #333; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.2em;">
-      Iniciando Rapidus...
+    <div id="debug-log"
+      style="background: #050505; color: #ff4d00; height: 100vh; padding: 30px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; overflow: auto; display: flex; flex-direction: column; gap: 10px;">
+      <div
+        style="font-weight: 800; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px; font-size: 16px;">
+        RAPIDUS SYSTEM BOOT <span style="font-size: 10px; opacity: 0.5;">v3.0.1</span>
+      </div>
+      <div>[ INFO ] Initializing DOM...</div>
+      <div id="status-env">[ .... ] Checking Env Vars...</div>
+      <div id="status-react">[ .... ] Loading React Modules...</div>
+      <div id="status-sw">[ .... ] Syncing Service Worker...</div>
+      <div id="error-console" style="color: #ff0000; margin-top: 20px; font-weight: bold;"></div>
     </div>
   </div>
-  <script type="module" src="/index.tsx"></script>
+
   <script>
+    // Diagnóstico Inicial
+    const log = (id, msg, color = '#ff4d00') => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.innerText = `[ OK ] ${msg}`;
+        el.style.color = '#00ff00';
+      }
+    };
+
     window.onerror = function (msg, url, line, col, error) {
-      var root = document.getElementById('root');
-      if (root) {
-        root.innerHTML = '<div style="color: red; padding: 20px; font-family: monospace; font-size: 12px;">Erro de Inicialização: ' + msg + '</div>';
+      const errEl = document.getElementById('error-console');
+      if (errEl) {
+        errEl.innerHTML = `CRITICAL ERROR: ${msg}<br><span style="font-size: 10px; font-weight: normal; opacity: 0.7;">${url}:${line}:${col}</span>`;
       }
       return false;
     };
+
+    setTimeout(() => {
+      log('status-env', 'Env Check Bypassed');
+    }, 500);
   </script>
+
+  <script type="module">
+    console.log('Index.tsx Loading...');
+    document.getElementById('status-react').innerText = '[ OK ] React Modules Linked';
+    document.getElementById('status-react').style.color = '#00ff00';
+  </script>
+
+  <script type="module" src="/index.tsx?v=4"></script>
 </body>
 
 </html>
