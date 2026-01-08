@@ -29,11 +29,11 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
 
     const channel = supabase
       .channel('inbox_updates')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'clientes' }, () => {
-        fetchInboxData();
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes' }, () => {
+        fetchInboxData(true);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'entregas' }, () => {
-        fetchInboxData();
+        fetchInboxData(true);
       })
       .subscribe();
 
@@ -42,8 +42,8 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
     };
   }, []);
 
-  const fetchInboxData = async () => {
-    setLoading(true);
+  const fetchInboxData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       // Buscar estabelecimentos, clientes (JSON) e entregas recusadas (tabela relational)
       const { data: estData } = await supabase.from('estabelecimentos').select('*');

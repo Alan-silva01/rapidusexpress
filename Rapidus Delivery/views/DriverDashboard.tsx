@@ -42,14 +42,14 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
         filter: `entregador_id=eq.${profile.id}`
       }, () => {
         console.log('Realtime update received');
-        fetchDeliveries();
+        fetchDeliveries(true); // Chamada silenciosa
       })
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'perfis',
         filter: `id=eq.${profile.id}`
-      }, () => fetchDriverData())
+      }, () => fetchDriverData(true))
       .subscribe();
 
     return () => {
@@ -57,7 +57,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
     };
   }, [profile.id]);
 
-  const fetchDriverData = async () => {
+  const fetchDriverData = async (silent = false) => {
+    if (!silent) setLoading(true);
     const { data } = await supabase.from('perfis').select('*').eq('id', profile.id).single();
     if (data) {
       setDriverProfile(data);
@@ -65,8 +66,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
     }
   };
 
-  const fetchDeliveries = async () => {
-    setLoading(true);
+  const fetchDeliveries = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const { data, error } = await supabase
         .from('entregas')

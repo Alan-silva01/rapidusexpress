@@ -50,11 +50,17 @@ const App: React.FC = () => {
     });
     authSubscription = subscription;
 
-    // Listener Realtime Global para Entregas
+    // Listener Realtime Global para Entregas e Clientes (n8n)
     const channel = supabase
       .channel('global_delivery_updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'entregas' }, (payload) => {
         handleRealtimeEvent(payload);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes' }, (payload) => {
+        // Quando o clientes (n8n) muda, notificamos o admin
+        if (profile?.funcao === 'admin') {
+          handleRealtimeEvent({ ...payload, isFromClients: true });
+        }
       })
       .subscribe();
 
@@ -69,6 +75,18 @@ const App: React.FC = () => {
 
     const newData = payload.new as any;
     const oldData = payload.old as any;
+
+    // Caso especial: n8n atualizando a tabela clientes
+    if (payload.isFromClients) {
+      if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+        NotificationManager.notify(
+          '🔔 Pedido n8n Recebido!',
+          'Uma nova entrega foi injetada via n8n. Verifique sua Inbox.',
+          '/inbox'
+        );
+      }
+      return;
+    }
 
     if (payload.eventType === 'INSERT') {
       // Nova Entrega (Som para Admin)

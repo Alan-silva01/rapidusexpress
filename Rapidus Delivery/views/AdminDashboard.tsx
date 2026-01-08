@@ -83,7 +83,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
     const channel = supabase
       .channel('admin_dashboard')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'entregas' }, (payload) => {
-        fetchRecentActivities();
+        fetchRecentActivities(true); // Chamada silenciosa
         const newData = payload.new as any;
         if (payload.eventType === 'UPDATE') {
           if (newData.status === 'finalizada') {
@@ -92,6 +92,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
             showNotification('Um entregador aceitou um pedido!', 'info');
           }
         }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes' }, () => {
+        // Se o n8n atualizar o JSON de clientes, atualizamos aqui também se necessário
+        // (Embora o Dashboard foque na tabela entregas)
+        fetchRecentActivities(true);
       })
       .subscribe();
 
@@ -113,7 +118,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
     setTimeout(() => setNotification(null), 5000);
   };
 
-  const fetchRecentActivities = async () => {
+  const fetchRecentActivities = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       let query = supabase
         .from('entregas')
