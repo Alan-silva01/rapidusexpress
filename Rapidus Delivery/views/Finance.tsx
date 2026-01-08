@@ -372,8 +372,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md overflow-y-auto overflow-x-hidden" onClick={() => setShowModal(false)}>
-          <div className="glass-card w-full max-w-sm p-8 rounded-[2.5rem] border-white/10 my-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm" onClick={() => setShowModal(false)}>
+          <div className="glass-card w-full max-w-sm p-8 rounded-[2.5rem] border-white/10 shadow-2xl relative animate-fade" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-black uppercase tracking-tighter">Lançamento</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-600"><X size={20} /></button>

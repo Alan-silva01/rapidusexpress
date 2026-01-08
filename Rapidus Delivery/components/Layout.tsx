@@ -19,12 +19,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, role, currentView, onV
           <nav className="bottom-nav-pill flex justify-around items-center max-w-[340px] mx-auto shadow-2xl">
             <MobileNavItem active={currentView === 'dashboard'} onClick={() => onViewChange('dashboard')} icon={<Home size={18} strokeWidth={1.5} />} />
 
-            {role === 'admin' && (
-              <MobileNavItem active={currentView === 'inbox'} onClick={() => onViewChange('inbox')} icon={<Inbox size={18} strokeWidth={1.5} />} />
-            )}
+            <MobileNavItem active={currentView === 'map'} onClick={() => onViewChange('map')} icon={<MapIcon size={18} strokeWidth={1.5} />} />
 
             {role === 'admin' && (
-              <MobileNavItem active={currentView === 'self_delivery'} onClick={() => onViewChange('self_delivery')} icon={<Bike size={18} strokeWidth={1.5} />} />
+              <MobileNavItem active={currentView === 'inbox'} onClick={() => onViewChange('inbox')} icon={<Inbox size={18} strokeWidth={1.5} />} />
             )}
 
             {role === 'admin' && (
@@ -34,6 +32,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, role, currentView, onV
             <MobileNavItem active={currentView === 'finance'} onClick={() => onViewChange('finance')} icon={<DollarSign size={18} strokeWidth={1.5} />} />
 
             <MobileNavItem active={currentView === 'profile'} onClick={() => onViewChange('profile')} icon={<User size={18} strokeWidth={1.5} />} />
+
           </nav>
         </div>
       </div>

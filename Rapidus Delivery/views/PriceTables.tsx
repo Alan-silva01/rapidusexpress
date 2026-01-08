@@ -259,8 +259,8 @@ const PriceTables: React.FC<PriceTablesProps> = ({ onBack }) => {
 
             {/* Modal Adicionar Bairro */}
             {showAddBairro && (
-                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade">
-                    <div className="w-full max-w-sm bg-zinc-950 rounded-[3rem] border border-white/5 p-8 shadow-2xl">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm animate-fade" onClick={() => setShowAddBairro(false)}>
+                    <div className="w-full max-w-sm bg-zinc-950 rounded-[3rem] border border-white/5 p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
                         <h2 className="text-xl font-black text-white uppercase tracking-tighter mb-1 font-inter">Novo Bairro</h2>
                         <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-6 leading-none">Cadastrar área de cobertura</p>
 
