@@ -145,16 +145,15 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, onLogout }) => {
         <button
           type="button"
           onClick={async () => {
-            // VERBOSE DEBUG LOGIC
             try {
               if (!('Notification' in window)) {
-                alert('SEU NAVEGADOR NÃO SUPORTA NOTIFICAÇÕES.');
+                alert('Seu navegador não suporta notificações.');
                 return;
               }
 
               const permission = await Notification.requestPermission();
               if (permission !== 'granted') {
-                alert('PERMISSÃO NEGADA! Vá nas configurações do site (ícone de cadeado na URL) e permita notificações.');
+                alert('Permissão negada! Por favor, habilite notificações nas configurações do navegador.');
                 return;
               }
 
@@ -165,11 +164,10 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, onLogout }) => {
 
               const registration = await navigator.serviceWorker.ready;
               if (!registration) {
-                alert('Service Worker não está pronto. Tente recarregar a página.');
+                window.location.reload();
                 return;
               }
 
-              // VAPID Key hardcoded for debug
               const VAPID_PUBLIC_KEY = 'BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c';
 
               const urlBase64ToUint8Array = (base64String: string) => {
@@ -198,22 +196,20 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, onLogout }) => {
                 }).eq('id', profile.id);
 
                 if (error) {
-                  alert('ERRO AO SALVAR NO BANCO: ' + error.message);
+                  throw error;
                 } else {
-                  alert('SUCESSO TOTAL! Token salvo. PWA ativado com sucesso.');
+                  alert('Notificações ativadas com sucesso!');
                 }
-              } else {
-                alert('FALHA FATAL: O navegador não gerou a subscrição.');
               }
 
             } catch (err: any) {
               console.error(err);
-              alert('ERRO TÉCNICO: ' + err.message);
+              alert('Erro ao ativar notificações: ' + err.message);
             }
           }}
           className="w-full h-14 bg-orange-primary/10 text-orange-primary rounded-3xl font-black flex items-center justify-center gap-2 border border-orange-primary/20 transition-all active:scale-95 text-[9px] uppercase tracking-widest"
         >
-          <Bell size={16} /> Diagnosticador Notificações
+          <Bell size={16} /> Ativar Notificações
         </button>
       </form>
     </div>
