@@ -1,17 +1,14 @@
-const CACHE_NAME = 'rapidus-cache-v2';
+const CACHE_NAME = 'rapidus-cache-v3';
 const urlsToCache = [
     '/',
-    '/index.html',
-    '/manifest.json',
-    '/icons/icon-192.jpg',
-    '/icons/icon-512.jpg'
+    '/index.html'
 ];
 
 self.addEventListener('install', event => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => cache.addAll(urlsToCache))
-            .then(() => self.skipWaiting())
     );
 });
 
