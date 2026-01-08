@@ -211,7 +211,76 @@ const App: React.FC = () => {
     }
   }, [session]);
 
-  // setupNotifications disabled to prevent overwrite
+  // Smart Auto-Sync Notification Logic
+  const setupNotifications = async () => {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      if (Notification.permission !== 'granted') return;
+
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+
+      const VAPID_PUBLIC_KEY = 'BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c';
+
+      // If no subscription, try to silent subscribe
+      if (!subscription) {
+        try {
+          const urlBase64ToUint8Array = (base64String: string) => {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+            return outputArray;
+          };
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+          });
+        } catch (e) {
+          console.warn('Silent subscribe failed:', e);
+          return;
+        }
+      }
+
+      if (subscription && profile?.id) {
+        // Check DB value first to avoid unnecessary overwrite risk
+        const { data: currentDb } = await supabase
+          .from('perfis')
+          .select('push_token')
+          .eq('id', profile.id)
+          .single();
+
+        const localStr = JSON.stringify(subscription);
+        const remoteStr = typeof currentDb?.push_token === 'string'
+          ? currentDb.push_token
+          : JSON.stringify(currentDb?.push_token);
+
+        // Only update if TRULY different (Smart Sync)
+        // Compare endpoints primarily because expirationTime changes often
+        const localEndpoint = JSON.parse(localStr).endpoint;
+        const remoteEndpoint = remoteStr ? JSON.parse(remoteStr).endpoint : null;
+
+        if (localEndpoint !== remoteEndpoint) {
+          console.log('🔄 Updating Stale Push Token...');
+          await supabase.from('perfis').update({
+            push_token: localStr
+          }).eq('id', profile.id);
+          console.log('✅ Token Synced Successfully');
+        } else {
+          console.log('✅ Push Token is Active & Valid');
+        }
+      }
+    } catch (err) {
+      console.error('Auto-Sync Error:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (session && profile) {
+      setupNotifications();
+    }
+  }, [session, profile?.id]);
 
 
   const fetchProfile = async (userId: string) => {
