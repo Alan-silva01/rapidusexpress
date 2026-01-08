@@ -3,22 +3,18 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 
 const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
 }
 
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-
-// Registrar Service Worker
+// Registrar Service Worker de forma segura
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('SW registrado:', reg))
-      .catch(err => console.log('SW falhou:', err));
-  });
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => console.log('SW ok'))
+    .catch(err => console.error('SW erro:', err));
 }
