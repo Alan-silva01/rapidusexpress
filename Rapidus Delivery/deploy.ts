@@ -2,13 +2,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import webpush from "npm:web-push@3.6.4"
 
-const VAPID_PUBLIC_KEY = "BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c"
-const VAPID_PRIVATE_KEY = "Oo4t8-GsITMWYugHUtywc9pGNBubcfGmeazsmww2rjI"
+// Keys must be set in Supabase Secrets
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")
+
+if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.error("Missing VAPID Keys in Environment")
+}
 
 webpush.setVapidDetails(
     'mailto:alan@rapidus.delivery',
-    VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY
+    VAPID_PUBLIC_KEY!,
+    VAPID_PRIVATE_KEY!
 )
 
 serve(async (req) => {

@@ -168,7 +168,11 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, onLogout }) => {
                 return;
               }
 
-              const VAPID_PUBLIC_KEY = 'BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c';
+              const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+              if (!VAPID_PUBLIC_KEY) {
+                alert('Erro: Chave VAPID não configurada.');
+                return;
+              }
 
               const urlBase64ToUint8Array = (base64String: string) => {
                 const padding = '='.repeat((4 - base64String.length % 4) % 4);
