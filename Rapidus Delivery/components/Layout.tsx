@@ -16,6 +16,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, role, currentView, onV
       {/* Mobile Nano-Pill Nav - With solid black background area */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
         <div className="bg-black pt-2 pb-6 px-8">
+          <nav className="bottom-nav-pill flex justify-around items-center max-w-[340px] mx-auto shadow-2xl">
             <MobileNavItem active={currentView === 'dashboard'} onClick={() => onViewChange('dashboard')} icon={<Home size={18} strokeWidth={1.5} />} />
 
             <MobileNavItem active={currentView === 'map'} onClick={() => onViewChange('map')} icon={<MapIcon size={18} strokeWidth={1.5} />} />
