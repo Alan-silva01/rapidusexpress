@@ -167,6 +167,24 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
         } catch (pushErr) {
           console.warn('Push notification failed (non-fatal):', pushErr);
         }
+
+        // Send data to n8n webhook for driver notification
+        try {
+          await fetch('https://rapidus-n8n-webhook.b7bsm5.easypanel.host/webhook/notificar_entregador', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              entregador_id: driver.id,
+              entregador_nome: driver.nome,
+              estabelecimento: store.nome_estabelecimento || store.numero_whatsapp,
+              valor_frete: parseFloat(delivery.valor_frete) || 0,
+              endereco_cliente: delivery.endereco_cliente || []
+            })
+          });
+          console.log('📤 Webhook n8n notificado:', driver.nome);
+        } catch (webhookErr) {
+          console.warn('n8n webhook failed (non-fatal):', webhookErr);
+        }
       }
 
       // Auto-aceite para o Admin
