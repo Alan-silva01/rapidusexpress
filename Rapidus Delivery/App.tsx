@@ -200,157 +200,104 @@ const App: React.FC = () => {
   }, [profile?.id]);
   */
 
-  window.history.replaceState(null, '', window.location.pathname);
-}
+  // Handle Deep Linking (Push Click)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view');
+    if ((viewParam === 'inbox' || window.location.hash === '#inbox') && session) {
+      console.log('🔗 Deep Link Detected: Inbox');
+      setCurrentView('inbox');
+      window.history.replaceState(null, '', window.location.pathname);
+    }
   }, [session]);
 
-  /*
-  const setupNotifications = async () => {
+  // setupNotifications disabled to prevent overwrite
+
+
+  const fetchProfile = async (userId: string) => {
     try {
-      if (Notification.permission === 'default') {
-        return;
-      }
-
-      if (Notification.permission === 'granted') {
-        // Ensure SW is registered/ready
-        if ('serviceWorker' in navigator) {
-          await navigator.serviceWorker.register('/sw.js');
-        }
-
-        const registration = await navigator.serviceWorker.ready;
-
-        // Try to update SW to ensure latest version handles clicks
-        try { await registration.update(); } catch (e) { /* ignore */ }
-
-const VAPID_PUBLIC_KEY = 'BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c';
-
-// Helper
-const urlBase64ToUint8Array = (base64String: string) => {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-};
-
-try {
-  let subscription = await registration.pushManager.getSubscription();
-
-  // Force subscribe if missing
-  if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-    });
-  }
-
-  if (subscription && profile) {
-    // Only update if it's a valid object
-    const subJson = JSON.parse(JSON.stringify(subscription));
-    if (subJson.endpoint) {
-      await supabase.from('perfis').update({
-        push_token: JSON.stringify(subscription)
-      }).eq('id', profile.id);
-      console.log('✅ Push Synced & Saved');
-    }
-  }
-} catch (pushErr) {
-  console.warn('Push setup error:', pushErr);
-}
-      }
+      const { data, error } = await supabase.from('perfis').select('*').eq('id', userId).single();
+      if (error) throw error;
+      setProfile(data);
     } catch (err) {
-  console.error('Error in Notification setup:', err);
-}
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
-  */
 
-const fetchProfile = async (userId: string) => {
-  try {
-    const { data, error } = await supabase.from('perfis').select('*').eq('id', userId).single();
-    if (error) throw error;
-    setProfile(data);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setProfile(null);
+    setCurrentView('dashboard');
+  };
 
-const handleLogout = async () => {
-  await supabase.auth.signOut();
-  setSession(null);
-  setProfile(null);
-  setCurrentView('dashboard');
-};
-
-if (loading) {
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-t border-orange-primary"></div>
-    </div>
-  );
-}
-
-if (!session) return <Login />;
-
-const renderContent = () => {
-  if (!profile) return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center">
-      <div className="w-16 h-16 bg-orange-primary/10 rounded-2xl flex items-center justify-center text-orange-primary mb-6">
-        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t border-orange-primary"></div>
       </div>
-      <h2 className="text-xl font-black text-white uppercase tracking-tight mb-2">Perfil não encontrado</h2>
-      <p className="text-xs text-gray-500 mb-8 max-w-xs leading-relaxed">Não conseguimos carregar suas informações de acesso. Tente entrar novamente.</p>
-      <button
-        onClick={handleLogout}
-        className="px-8 h-12 bg-white/5 border border-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
-      >
-        Sair e Tentar de Novo
-      </button>
-    </div>
-  );
-  switch (currentView) {
-    case 'dashboard':
-      return profile.funcao === 'admin' ? <AdminDashboard onViewChange={setCurrentView} profile={profile} /> : <DriverDashboard profile={profile} onViewChange={setCurrentView} />;
-    case 'inbox':
-      return <DeliveriesInbox onAssignSuccess={setCurrentView} profile={profile} />;
-    case 'profile':
-      return <Profile profile={profile} onUpdate={() => fetchProfile(profile.id)} onLogout={handleLogout} />;
-    case 'finance':
-      return <Finance profile={profile} />;
-    case 'map':
-      return <MapView profile={profile} gpsStatus={gpsStatus} />;
-    case 'drivers':
-      return <DriverManagement />;
-    case 'new_client':
-      return <AdminDashboard onViewChange={setCurrentView} profile={profile} showNewClientForm={true} />;
-    case 'self_delivery':
-      // No modo 'self_delivery', o Admin vê a mesma interface do entregador
-      return <DriverDashboard profile={profile} onViewChange={setCurrentView} />;
-    case 'history':
-      return <DeliveriesHistory profileId={profile.id} onBack={() => setCurrentView('dashboard')} />;
-    case 'prices':
-      return <PriceTables onBack={() => setCurrentView('dashboard')} />;
-    default:
-      return <AdminDashboard onViewChange={setCurrentView} profile={profile} />;
+    );
   }
-};
 
-return (
-  <Layout
-    role={profile?.funcao || 'entregador'}
-    currentView={currentView}
-    onViewChange={setCurrentView}
-    onLogout={handleLogout}
-  >
-    {renderContent()}
-  </Layout>
-);
+  if (!session) return <Login />;
+
+  const renderContent = () => {
+    if (!profile) return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-orange-primary/10 rounded-2xl flex items-center justify-center text-orange-primary mb-6">
+          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-black text-white uppercase tracking-tight mb-2">Perfil não encontrado</h2>
+        <p className="text-xs text-gray-500 mb-8 max-w-xs leading-relaxed">Não conseguimos carregar suas informações de acesso. Tente entrar novamente.</p>
+        <button
+          onClick={handleLogout}
+          className="px-8 h-12 bg-white/5 border border-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+        >
+          Sair e Tentar de Novo
+        </button>
+      </div>
+    );
+    switch (currentView) {
+      case 'dashboard':
+        return profile.funcao === 'admin' ? <AdminDashboard onViewChange={setCurrentView} profile={profile} /> : <DriverDashboard profile={profile} onViewChange={setCurrentView} />;
+      case 'inbox':
+        return <DeliveriesInbox onAssignSuccess={setCurrentView} profile={profile} />;
+      case 'profile':
+        return <Profile profile={profile} onUpdate={() => fetchProfile(profile.id)} onLogout={handleLogout} />;
+      case 'finance':
+        return <Finance profile={profile} />;
+      case 'map':
+        return <MapView profile={profile} gpsStatus={gpsStatus} />;
+      case 'drivers':
+        return <DriverManagement />;
+      case 'new_client':
+        return <AdminDashboard onViewChange={setCurrentView} profile={profile} showNewClientForm={true} />;
+      case 'self_delivery':
+        // No modo 'self_delivery', o Admin vê a mesma interface do entregador
+        return <DriverDashboard profile={profile} onViewChange={setCurrentView} />;
+      case 'history':
+        return <DeliveriesHistory profileId={profile.id} onBack={() => setCurrentView('dashboard')} />;
+      case 'prices':
+        return <PriceTables onBack={() => setCurrentView('dashboard')} />;
+      default:
+        return <AdminDashboard onViewChange={setCurrentView} profile={profile} />;
+    }
+  };
+
+  return (
+    <Layout
+      role={profile?.funcao || 'entregador'}
+      currentView={currentView}
+      onViewChange={setCurrentView}
+      onLogout={handleLogout}
+    >
+      {renderContent()}
+    </Layout>
+  );
 };
 
 export default App;
