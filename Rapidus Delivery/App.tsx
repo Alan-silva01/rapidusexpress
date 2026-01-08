@@ -18,7 +18,7 @@ import NotificationManager from './utils/NotificationManager';
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<Perfil | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'inbox' | 'profile' | 'finance' | 'map' | 'drivers' | 'new_client' | 'self_delivery' | 'history' | 'prices'>('dashboard');
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'searching' | 'active' | 'denied' | 'error'>('idle');
 

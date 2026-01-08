@@ -5,6 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Rapidus Delivery</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#FF4D00" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -121,12 +124,16 @@
 </head>
 
 <body>
-  <div id="root">
-    <div
-      style="background: #000; color: #333; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 11px; letter-spacing: 0.2em;">
-      RAPIDUS CARREGANDO...
-    </div>
-  </div>
+  <div id="root"></div>
+  <script>
+    // Unregister any old Service Workers to avoid cache issues
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(reg => reg.unregister());
+      });
+    }
+  </script>
+  <script>console.log('index.html loaded');</script>
   <script type="module" src="/index.tsx"></script>
 </body>
 
