@@ -211,101 +211,20 @@ const App: React.FC = () => {
     }
   }, [session]);
 
-  // Smart Auto-Sync Notification Logic (V2 - Aggressive Wake-up)
-  const setupNotifications = async () => {
-    try {
-      console.log('🔔 Push Setup: Starting check...');
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('🔔 Push Setup: Browser not supported');
-        return;
-      }
-      if (Notification.permission !== 'granted') {
-        console.log('🔔 Push Setup: Permission not granted');
-        return;
-      }
-
-      const registration = await navigator.serviceWorker.ready;
-      console.log('🔔 Push Setup: SW ready');
-
-      // AGGRESSIVE WAKE-UP: Force SW update check to ensure it's responsive
-      try {
-        await registration.update();
-        console.log('🔔 Push Setup: SW updated/refreshed');
-      } catch (updateErr) {
-        console.warn('🔔 Push Setup: SW update check failed (non-fatal)', updateErr);
-      }
-
-      const VAPID_PUBLIC_KEY = 'BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c';
-
-      const urlBase64ToUint8Array = (base64String: string) => {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
-        return outputArray;
-      };
-
-      let subscription = await registration.pushManager.getSubscription();
-      console.log('🔔 Push Setup: Existing subscription?', !!subscription);
-
-      // AUTO-RESUBSCRIBE if subscription is missing
-      if (!subscription) {
-        console.log('🔔 Push Setup: No subscription found, attempting silent subscribe...');
-        try {
-          subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-          });
-          console.log('🔔 Push Setup: Silent subscribe SUCCESS');
-        } catch (e) {
-          console.error('🔔 Push Setup: Silent subscribe FAILED', e);
-          return;
-        }
-      }
-
-      if (subscription && profile?.id) {
-        // Check DB value first to avoid unnecessary overwrite risk
-        const { data: currentDb } = await supabase
-          .from('perfis')
-          .select('push_token')
-          .eq('id', profile.id)
-          .single();
-
-        const localStr = JSON.stringify(subscription);
-        const remoteStr = typeof currentDb?.push_token === 'string'
-          ? currentDb.push_token
-          : JSON.stringify(currentDb?.push_token);
-
-        // Compare endpoints primarily because expirationTime changes often
-        let localEndpoint = '';
-        let remoteEndpoint = '';
-        try {
-          localEndpoint = JSON.parse(localStr).endpoint;
-          remoteEndpoint = remoteStr ? JSON.parse(remoteStr).endpoint : '';
-        } catch (parseErr) {
-          console.warn('🔔 Push Setup: Parse error, will force sync', parseErr);
-        }
-
-        // SYNC if endpoints differ OR if remote is empty/null
-        if (localEndpoint !== remoteEndpoint || !remoteEndpoint) {
-          console.log('🔄 Push Setup: Syncing token to DB...');
-          await supabase.from('perfis').update({
-            push_token: localStr
-          }).eq('id', profile.id);
-          console.log('✅ Push Setup: Token Synced Successfully');
-        } else {
-          console.log('✅ Push Setup: Token is Active & Valid (no sync needed)');
-        }
-      }
-    } catch (err) {
-      console.error('🔔 Push Setup: Fatal Error', err);
-    }
-  };
-
+  // OneSignal Auto-Login on App Load
   useEffect(() => {
     if (session && profile) {
-      setupNotifications();
+      // Register user with OneSignal for targeted push notifications
+      if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
+        (window as any).OneSignalDeferred.push(async function (OneSignal: any) {
+          try {
+            await OneSignal.login(profile.id);
+            console.log('✅ OneSignal: User auto-registered with ID:', profile.id);
+          } catch (e) {
+            console.warn('OneSignal auto-login failed:', e);
+          }
+        });
+      }
     }
   }, [session, profile?.id]);
 
