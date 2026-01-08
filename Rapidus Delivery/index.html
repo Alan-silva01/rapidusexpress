@@ -121,8 +121,22 @@
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div
+      style="background: black; color: #333; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.2em;">
+      Iniciando Rapidus...
+    </div>
+  </div>
   <script type="module" src="/index.tsx"></script>
+  <script>
+    window.onerror = function (msg, url, line, col, error) {
+      var root = document.getElementById('root');
+      if (root) {
+        root.innerHTML = '<div style="color: red; padding: 20px; font-family: monospace; font-size: 12px;">Erro de Inicialização: ' + msg + '</div>';
+      }
+      return false;
+    };
+  </script>
 </body>
 
 </html>
