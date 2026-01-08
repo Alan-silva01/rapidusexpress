@@ -40,13 +40,11 @@ self.addEventListener('push', event => {
     const options = {
         body: data.body || 'Você tem uma nova atualização no Rapidus!',
         icon: '/icons/icon-192.png',
-        badge: '/icons/icon-192.png',
-        vibrate: [200, 100, 200],
         data: {
             url: data.url || '/'
         },
-        tag: 'delivery-notification-' + Date.now(),
-        renotify: true
+        tag: 'rapidus-' + Date.now(), // Unique tag every time
+        requireInteraction: true // Keeps notification visible until clicked
     };
 
     event.waitUntil(
