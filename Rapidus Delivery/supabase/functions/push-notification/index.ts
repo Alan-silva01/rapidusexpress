@@ -2,14 +2,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import webpush from "npm:web-push@3.6.4"
 
-// VAPID Keys
-const VAPID_PUBLIC_KEY = "BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c"
-const VAPID_PRIVATE_KEY = "Oo4t8-GsITMWYugHUtywc9pGNBubcfGmeazsmww2rjI"
+// Keys must be set in Supabase Secrets
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")
+
+if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.error("Missing VAPID Keys in Environment")
+}
 
 webpush.setVapidDetails(
     'mailto:alan@rapidus.delivery',
-    VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY
+    VAPID_PUBLIC_KEY!,
+    VAPID_PRIVATE_KEY!
 )
 
 serve(async (req) => {
@@ -21,7 +25,6 @@ serve(async (req) => {
             const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
             const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-            // Fetch Admins
             const adminResponse = await fetch(`${supabaseUrl}/rest/v1/perfis?funcao=eq.admin&select=push_token`, {
                 headers: {
                     'apikey': supabaseKey,
@@ -32,29 +35,43 @@ serve(async (req) => {
 
             const notifications = []
 
-            // --- CUSTOM FORMATTING START ---
-            const title = "NOVA ENTREGA DISPONÍVEL"
+            // TITLE
+            const title = "RAPIDUS - NOVA ENTREGA 🚀"
 
-            // Parse Value
+            // PARSE VALUES
+            // 'observacao' now contains "Loja: Drogasil - obs" thanks to the trigger hack
+            // We can use it directly or try to clean it up if we want.
+            // But let's trust the trigger's formatting for the body.
             const val = parseFloat(record.valor_total || record.valor_frete || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+            const rawObs = record.observacao || ""
 
-            // Parse Estabelecimento (Fallback to 'Parceiro' if missing)
-            const estab = record.estabelecimento || "Parceiro"
+            // "Loja: Drogasil - obs" -> "Drogasil"
+            let estabName = "Uma loja"
+            if (rawObs.startsWith("Loja: ")) {
+                const parts = rawObs.split(" - ")
+                estabName = parts[0].replace("Loja: ", "")
+            }
 
-            // Body format: "DROGASIL solicitou uma entrega - R$ 5.00 \n toque para ver"
-            const body = `${estab} solicitou uma entrega - ${val}\ntoque para ver`
-            // --- CUSTOM FORMATTING END ---
+            const body = `${estabName} solicitou uma entrega\nValor: ${val}`
+
+            // CLICK URL
+            // Using query param to handle routing client-side (bypasses 404)
+            const clickUrl = "https://rapidusexpress.vercel.app/?view=inbox"
 
             for (const admin of admins) {
                 if (admin.push_token) {
                     try {
-                        // Handle different token formats (string vs object)
-                        const sub = typeof admin.push_token === 'string' ? JSON.parse(admin.push_token) : admin.push_token
+                        // Handle token string parsing
+                        let sub = admin.push_token
+                        if (typeof sub === 'string') {
+                            try { sub = JSON.parse(sub) } catch (e) { console.error("Bad JSON token", e) }
+                        }
+
                         if (sub && sub.endpoint) {
                             const promise = webpush.sendNotification(sub, JSON.stringify({
                                 title: title,
                                 body: body,
-                                url: 'https://rapidusexpress.vercel.app/admin'
+                                url: clickUrl
                             }))
                             notifications.push(promise)
                         }
