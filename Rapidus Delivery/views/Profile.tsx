@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabase';
 import { Perfil } from '../types';
-import { Camera, MapPin, Phone, CreditCard, Bike, Check, Loader2, User, LogOut } from 'lucide-react';
+import { Camera, MapPin, Phone, CreditCard, Bike, Check, Loader2, User, LogOut, Bell } from 'lucide-react';
 import { cropToSquare } from '../utils/imageUtils';
 
 interface ProfileProps {
@@ -140,6 +140,36 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, onLogout }) => {
           className="w-full h-14 bg-white/5 text-gray-400 rounded-3xl font-black flex items-center justify-center gap-2 border border-white/5 transition-all active:scale-95 text-[9px] uppercase tracking-widest"
         >
           Redefinir Senha
+        </button>
+
+        <button
+          type="button"
+          onClick={async () => {
+            if ('Notification' in window) {
+              const permission = await Notification.requestPermission();
+              if (permission !== 'granted') {
+                alert('Permissão negada! Habilite notificações nas configurações do navegador/celular.');
+                return;
+              }
+
+              if ('serviceWorker' in navigator) {
+                const reg = await navigator.serviceWorker.ready;
+                try {
+                  // Forçar registro novamente chamando a lógica do App (reloading page is simplest way to re-trigger App.tsx logic)
+                  window.location.reload();
+                } catch (e: any) {
+                  alert('Erro SW: ' + e.message);
+                }
+              } else {
+                alert('Seu navegador não suporta ServiceWorkers (necessário para notificações).');
+              }
+            } else {
+              alert('Seu navegador não suporta notificações.');
+            }
+          }}
+          className="w-full h-14 bg-orange-primary/10 text-orange-primary rounded-3xl font-black flex items-center justify-center gap-2 border border-orange-primary/20 transition-all active:scale-95 text-[9px] uppercase tracking-widest"
+        >
+          <Bell size={16} /> Ativar Notificações
         </button>
       </form>
     </div>
