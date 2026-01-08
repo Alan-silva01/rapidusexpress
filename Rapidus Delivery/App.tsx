@@ -198,21 +198,37 @@ const App: React.FC = () => {
     }
   }, [session]);
 
-  // OneSignal Auto-Login on App Load
+  // OneSignal Auto-Login on App Load + Visibility Change (iOS PWA fix)
   useEffect(() => {
-    if (session && profile) {
-      // Register user with OneSignal for targeted push notifications
-      if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
+    const registerOneSignal = () => {
+      if (session && profile && typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
         (window as any).OneSignalDeferred.push(async function (OneSignal: any) {
           try {
             await OneSignal.login(profile.id);
-            console.log('✅ OneSignal: User auto-registered with ID:', profile.id);
+            console.log('✅ OneSignal: User registered with ID:', profile.id);
           } catch (e) {
-            console.warn('OneSignal auto-login failed:', e);
+            console.warn('OneSignal login failed:', e);
           }
         });
       }
-    }
+    };
+
+    // Register on initial load
+    registerOneSignal();
+
+    // Re-register when app becomes visible (fixes iOS PWA issue)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('📱 App became visible - re-registering OneSignal');
+        registerOneSignal();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [session, profile?.id]);
 
 
