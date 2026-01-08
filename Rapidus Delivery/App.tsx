@@ -39,18 +39,6 @@ const App: React.FC = () => {
         if (event === 'SIGNED_IN') {
           setCurrentView('dashboard');
           NotificationManager.requestPermission();
-
-          // Register user with OneSignal for targeted push notifications
-          if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
-            (window as any).OneSignalDeferred.push(async function (OneSignal: any) {
-              try {
-                await OneSignal.login(session.user.id);
-                console.log('✅ OneSignal: User registered with ID:', session.user.id);
-              } catch (e) {
-                console.warn('OneSignal login failed:', e);
-              }
-            });
-          }
         }
         fetchProfile(session.user.id);
       }
@@ -318,6 +306,18 @@ const App: React.FC = () => {
   useEffect(() => {
     if (session && profile) {
       setupNotifications();
+
+      // Register user with OneSignal on every app load
+      if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
+        (window as any).OneSignalDeferred.push(async function (OneSignal: any) {
+          try {
+            await OneSignal.login(profile.id);
+            console.log('✅ OneSignal: User registered with ID:', profile.id);
+          } catch (e) {
+            console.warn('OneSignal login failed:', e);
+          }
+        });
+      }
     }
   }, [session, profile?.id]);
 
