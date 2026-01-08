@@ -1,0 +1,6 @@
+{
+    "imports": {
+        "std/": "https://deno.land/std@0.168.0/",
+        "npm:web-push": "npm:web-push@3.6.4"
+    }
+}
