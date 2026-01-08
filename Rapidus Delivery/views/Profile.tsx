@@ -146,26 +146,62 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, onLogout }) => {
           type="button"
           onClick={async () => {
             try {
-              // Use OneSignal for notifications
-              if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
-                (window as any).OneSignalDeferred.push(async function (OneSignal: any) {
-                  try {
-                    // Request permission via OneSignal
-                    await OneSignal.Notifications.requestPermission();
-
-                    // Register user with their Supabase ID
-                    await OneSignal.login(profile.id);
-
-                    console.log('✅ OneSignal: User registered with ID:', profile.id);
-                    alert('Notificações ativadas com sucesso via OneSignal!');
-                  } catch (e: any) {
-                    console.error('OneSignal error:', e);
-                    alert('Erro ao ativar notificações: ' + e.message);
-                  }
-                });
-              } else {
-                alert('Sistema de notificações não está pronto. Recarregue a página.');
+              if (!('Notification' in window)) {
+                alert('Seu navegador não suporta notificações.');
+                return;
               }
+
+              const permission = await Notification.requestPermission();
+              if (permission !== 'granted') {
+                alert('Permissão negada! Por favor, habilite notificações nas configurações do navegador.');
+                return;
+              }
+
+              if (!('serviceWorker' in navigator)) {
+                alert('Service Worker não suportado.');
+                return;
+              }
+
+              const registration = await navigator.serviceWorker.ready;
+              if (!registration) {
+                window.location.reload();
+                return;
+              }
+
+              const VAPID_PUBLIC_KEY = 'BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c';
+
+              const urlBase64ToUint8Array = (base64String: string) => {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+                const rawData = window.atob(base64);
+                const outputArray = new Uint8Array(rawData.length);
+                for (let i = 0; i < rawData.length; ++i) {
+                  outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
+              };
+
+              let subscription = await registration.pushManager.getSubscription();
+
+              if (!subscription) {
+                subscription = await registration.pushManager.subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                });
+              }
+
+              if (subscription) {
+                const { error } = await supabase.from('perfis').update({
+                  push_token: JSON.stringify(subscription)
+                }).eq('id', profile.id);
+
+                if (error) {
+                  throw error;
+                } else {
+                  alert('Notificações ativadas com sucesso!');
+                }
+              }
+
             } catch (err: any) {
               console.error(err);
               alert('Erro ao ativar notificações: ' + err.message);
