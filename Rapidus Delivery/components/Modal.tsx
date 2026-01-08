@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { X, CheckCircle2, AlertTriangle, Info, Bike, UserCheck } from 'lucide-react';
 
 interface ModalProps {
@@ -44,8 +45,8 @@ const Modal: React.FC<ModalProps> = ({
         admin: 'bg-orange-primary/10'
     };
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 animate-fade">
+    return ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 animate-fade">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -53,7 +54,7 @@ const Modal: React.FC<ModalProps> = ({
             />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-sm glass-card rounded-[2rem] p-8 border border-white/10 shadow-2xl">
+            <div className="relative w-full max-w-sm glass-card rounded-[2rem] p-8 border border-white/10 shadow-2xl z-10">
                 {/* Close Button */}
                 <button
                     onClick={onClose}
@@ -97,7 +98,8 @@ const Modal: React.FC<ModalProps> = ({
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
