@@ -115,6 +115,46 @@ const App: React.FC = () => {
     };
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    if (profile && 'serviceWorker' in navigator && 'PushManager' in window) {
+      setupNotifications();
+    }
+  }, [profile?.id]);
+
+  const setupNotifications = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        const registration = await navigator.serviceWorker.ready;
+        // Aqui precisaríamos de uma VAPID KEY real para sustentar o Push
+        // Como não temos uma chave externa, vamos apenas marcar que o usuário permitiu
+        // e se o navegador suportar, pegamos o token.
+        // Se o usuário tiver o n8n ou similar, ele mandará o token para lá.
+
+        try {
+          let subscription = await registration.pushManager.getSubscription();
+          if (!subscription) {
+            // Exemplo de como seria com uma public key
+            // subscription = await registration.pushManager.subscribe({
+            //   userVisibleOnly: true,
+            //   applicationServerKey: 'SUA_VAPID_PUBLIC_KEY'
+            // });
+          }
+
+          if (subscription) {
+            await supabase.from('perfis').update({
+              push_token: JSON.stringify(subscription)
+            }).eq('id', profile!.id);
+          }
+        } catch (pushErr) {
+          console.warn('Push Subscription failed (check VAPID keys):', pushErr);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao configurar notificações:', err);
+    }
+  };
+
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase.from('perfis').select('*').eq('id', userId).single();
