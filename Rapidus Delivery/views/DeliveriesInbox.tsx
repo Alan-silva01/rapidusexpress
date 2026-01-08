@@ -147,22 +147,23 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
         if (error) throw error;
       }
 
-      // Send push notification to assigned driver via n8n webhook
+      // Send push notification to assigned driver via Edge Function
       if (driver && driver.id) {
         try {
-          await fetch('https://rapidus-n8n-webhook.b7bsm5.easypanel.host/webhook/notificar_entregador', {
+          await fetch('https://iqsdjmhuznrfczefbluk.functions.supabase.co/push-notification', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              entregador_id: driver.id,
-              entregador_nome: driver.nome,
-              estabelecimento: store.nome_estabelecimento || store.numero_whatsapp,
-              valor_frete: parseFloat(delivery.valor_frete) || 0,
-              endereco_cliente: delivery.endereco_cliente,
-              nome_cliente: delivery.nome_cliente
+              type: 'INSERT',
+              table: 'entregas',
+              record: {
+                observacao: `Loja: ${store.nome_estabelecimento || store.numero_whatsapp}`,
+                valor_frete: parseFloat(delivery.valor_frete) || 0
+              },
+              target_user_id: driver.id
             })
           });
-          console.log('📲 Push notification sent to n8n for driver:', driver.nome);
+          console.log('📲 Push notification sent to driver:', driver.nome);
         } catch (pushErr) {
           console.warn('Push notification failed (non-fatal):', pushErr);
         }
