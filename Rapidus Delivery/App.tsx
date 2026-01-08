@@ -18,7 +18,7 @@ import NotificationManager from './utils/NotificationManager';
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<Perfil | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<'dashboard' | 'inbox' | 'profile' | 'finance' | 'map' | 'drivers' | 'new_client' | 'self_delivery' | 'history' | 'prices'>('dashboard');
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'searching' | 'active' | 'denied' | 'error'>('idle');
 
@@ -71,8 +71,6 @@ const App: React.FC = () => {
   }, []);
 
   const handleRealtimeEvent = (payload: any) => {
-    if (!profile) return;
-
     const newData = payload.new as any;
     const oldData = payload.old as any;
 
@@ -88,14 +86,23 @@ const App: React.FC = () => {
       return;
     }
 
+    // Nova Entrega - sempre notificar com som
+    if (payload.eventType === 'INSERT' && newData?.status === 'pendente') {
+      NotificationManager.notify(
+        '🚀 Novo Pedido Recebido!',
+        'Um estabelecimento acabou de enviar um novo pedido de entrega.',
+        '/inbox'
+      );
+      return;
+    }
+
+    // Lógica específica que depende do profile
+    if (!profile) return;
+
     if (payload.eventType === 'INSERT') {
       // Nova Entrega (Som para Admin)
       if (profile.funcao === 'admin' && newData.status === 'pendente') {
-        NotificationManager.notify(
-          '🚀 Novo Pedido Recebido!',
-          `Um estabelecimento acabou de enviar um novo pedido de entrega.`,
-          '/inbox'
-        );
+        // Já notificado acima
       }
     } else if (payload.eventType === 'UPDATE') {
       // Entrega Atribuída (Som para Entregador)
@@ -195,28 +202,39 @@ const App: React.FC = () => {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         const registration = await navigator.serviceWorker.ready;
-        // Aqui precisaríamos de uma VAPID KEY real para sustentar o Push
-        // Como não temos uma chave externa, vamos apenas marcar que o usuário permitiu
-        // e se o navegador suportar, pegamos o token.
-        // Se o usuário tiver o n8n ou similar, ele mandará o token para lá.
+
+        // VAPID Public Key para Web Push
+        const VAPID_PUBLIC_KEY = 'BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c';
 
         try {
           let subscription = await registration.pushManager.getSubscription();
           if (!subscription) {
-            // Exemplo de como seria com uma public key
-            // subscription = await registration.pushManager.subscribe({
-            //   userVisibleOnly: true,
-            //   applicationServerKey: 'SUA_VAPID_PUBLIC_KEY'
-            // });
+            // Converter a chave pública para Uint8Array
+            const urlBase64ToUint8Array = (base64String: string) => {
+              const padding = '='.repeat((4 - base64String.length % 4) % 4);
+              const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+              const rawData = window.atob(base64);
+              const outputArray = new Uint8Array(rawData.length);
+              for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+              }
+              return outputArray;
+            };
+
+            subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+            });
           }
 
-          if (subscription) {
+          if (subscription && profile) {
             await supabase.from('perfis').update({
               push_token: JSON.stringify(subscription)
-            }).eq('id', profile!.id);
+            }).eq('id', profile.id);
+            console.log('Push subscription salva:', subscription.endpoint);
           }
         } catch (pushErr) {
-          console.warn('Push Subscription failed (check VAPID keys):', pushErr);
+          console.warn('Push Subscription failed:', pushErr);
         }
       }
     } catch (err) {
