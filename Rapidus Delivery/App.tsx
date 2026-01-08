@@ -13,7 +13,6 @@ import { Layout } from './components/Layout';
 
 import DeliveriesHistory from './views/DeliveriesHistory';
 import PriceTables from './views/PriceTables';
-import NotificationManager from './utils/NotificationManager';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -38,7 +37,7 @@ const App: React.FC = () => {
       if (session) {
         if (event === 'SIGNED_IN') {
           setCurrentView('dashboard');
-          NotificationManager.requestPermission();
+          // OneSignal handles notification permission
         }
         fetchProfile(session.user.id);
       }
@@ -77,22 +76,14 @@ const App: React.FC = () => {
     // Caso especial: n8n atualizando a tabela clientes
     if (payload.isFromClients) {
       if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-        NotificationManager.notify(
-          '🔔 Pedido n8n Recebido!',
-          'Uma nova entrega foi injetada via n8n. Verifique sua Inbox.',
-          '/inbox'
-        );
+        console.log('🔔 Pedido n8n Recebido via realtime');
       }
       return;
     }
 
     // Nova Entrega - sempre notificar com som
     if (payload.eventType === 'INSERT' && newData?.status === 'pendente') {
-      NotificationManager.notify(
-        '🚀 Novo Pedido Recebido!',
-        'Um estabelecimento acabou de enviar um novo pedido de entrega.',
-        '/inbox'
-      );
+      console.log('🚀 Novo Pedido Recebido via realtime');
       return;
     }
 
@@ -110,17 +101,13 @@ const App: React.FC = () => {
         newData.entregador_id === profile.id &&
         oldData.status === 'pendente' &&
         newData.status === 'atribuida') {
-        NotificationManager.notify(
-          '📦 Nova Entrega Atribuída!',
-          'Você recebeu uma nova entrega! Clique para aceitar.',
-          '/dashboard'
-        );
+        console.log('📦 Entrega atribuída - notificação via OneSignal');
       }
 
       // Entrega Recusada ou Aceita (Notificar Admin)
       if (profile.funcao === 'admin' && newData.status !== oldData.status) {
         const msg = newData.status === 'aceita' ? 'Um motorista aceitou o pedido!' : `Status alterado para: ${newData.status}`;
-        NotificationManager.notify('Atualização de Entrega', msg);
+        console.log('Atualização de entrega:', msg);
       }
     }
   };
