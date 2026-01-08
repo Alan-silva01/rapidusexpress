@@ -145,31 +145,75 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, onLogout }) => {
         <button
           type="button"
           onClick={async () => {
-            if ('Notification' in window) {
-              const permission = await Notification.requestPermission();
-              if (permission !== 'granted') {
-                alert('Permissão negada! Habilite notificações nas configurações do navegador/celular.');
+            // VERBOSE DEBUG LOGIC
+            try {
+              if (!('Notification' in window)) {
+                alert('SEU NAVEGADOR NÃO SUPORTA NOTIFICAÇÕES.');
                 return;
               }
 
-              if ('serviceWorker' in navigator) {
-                const reg = await navigator.serviceWorker.ready;
-                try {
-                  // Forçar registro novamente chamando a lógica do App (reloading page is simplest way to re-trigger App.tsx logic)
-                  window.location.reload();
-                } catch (e: any) {
-                  alert('Erro SW: ' + e.message);
+              const permission = await Notification.requestPermission();
+              if (permission !== 'granted') {
+                alert('PERMISSÃO NEGADA! Vá nas configurações do site (ícone de cadeado na URL) e permita notificações.');
+                return;
+              }
+
+              if (!('serviceWorker' in navigator)) {
+                alert('Service Worker não suportado.');
+                return;
+              }
+
+              const registration = await navigator.serviceWorker.ready;
+              if (!registration) {
+                alert('Service Worker não está pronto. Tente recarregar a página.');
+                return;
+              }
+
+              // VAPID Key hardcoded for debug
+              const VAPID_PUBLIC_KEY = 'BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c';
+
+              const urlBase64ToUint8Array = (base64String: string) => {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+                const rawData = window.atob(base64);
+                const outputArray = new Uint8Array(rawData.length);
+                for (let i = 0; i < rawData.length; ++i) {
+                  outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
+              };
+
+              let subscription = await registration.pushManager.getSubscription();
+
+              if (!subscription) {
+                subscription = await registration.pushManager.subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                });
+              }
+
+              if (subscription) {
+                const { error } = await supabase.from('perfis').update({
+                  push_token: JSON.stringify(subscription)
+                }).eq('id', profile.id);
+
+                if (error) {
+                  alert('ERRO AO SALVAR NO BANCO: ' + error.message);
+                } else {
+                  alert('SUCESSO TOTAL! Token salvo. PWA ativado com sucesso.');
                 }
               } else {
-                alert('Seu navegador não suporta ServiceWorkers (necessário para notificações).');
+                alert('FALHA FATAL: O navegador não gerou a subscrição.');
               }
-            } else {
-              alert('Seu navegador não suporta notificações.');
+
+            } catch (err: any) {
+              console.error(err);
+              alert('ERRO TÉCNICO: ' + err.message);
             }
           }}
           className="w-full h-14 bg-orange-primary/10 text-orange-primary rounded-3xl font-black flex items-center justify-center gap-2 border border-orange-primary/20 transition-all active:scale-95 text-[9px] uppercase tracking-widest"
         >
-          <Bell size={16} /> Ativar Notificações
+          <Bell size={16} /> Diagnosticador Notificações
         </button>
       </form>
     </div>
