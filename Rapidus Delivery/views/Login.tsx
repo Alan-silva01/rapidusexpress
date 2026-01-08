@@ -125,8 +125,6 @@ const InputGroup = ({ label, icon, value, onChange, placeholder, type = 'text', 
         placeholder={placeholder}
         required
         autoComplete={rest.autoComplete || "off"}
-        onFocus={(e) => e.target.removeAttribute('readonly')}
-        readOnly
       />
     </div>
   </div>
