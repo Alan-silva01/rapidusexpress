@@ -211,34 +211,55 @@ const App: React.FC = () => {
     }
   }, [session]);
 
-  // Smart Auto-Sync Notification Logic
+  // Smart Auto-Sync Notification Logic (V2 - Aggressive Wake-up)
   const setupNotifications = async () => {
     try {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-      if (Notification.permission !== 'granted') return;
+      console.log('🔔 Push Setup: Starting check...');
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.log('🔔 Push Setup: Browser not supported');
+        return;
+      }
+      if (Notification.permission !== 'granted') {
+        console.log('🔔 Push Setup: Permission not granted');
+        return;
+      }
 
       const registration = await navigator.serviceWorker.ready;
-      let subscription = await registration.pushManager.getSubscription();
+      console.log('🔔 Push Setup: SW ready');
+
+      // AGGRESSIVE WAKE-UP: Force SW update check to ensure it's responsive
+      try {
+        await registration.update();
+        console.log('🔔 Push Setup: SW updated/refreshed');
+      } catch (updateErr) {
+        console.warn('🔔 Push Setup: SW update check failed (non-fatal)', updateErr);
+      }
 
       const VAPID_PUBLIC_KEY = 'BAfEBFOtIe1ByawG9QhfIlKSL2XNbEnjSn0HtJYIyuMtmQdgykJAxRT9CSQuBuPORnJVGv6rwOgd2QEPpEzH85c';
 
-      // If no subscription, try to silent subscribe
+      const urlBase64ToUint8Array = (base64String: string) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+        return outputArray;
+      };
+
+      let subscription = await registration.pushManager.getSubscription();
+      console.log('🔔 Push Setup: Existing subscription?', !!subscription);
+
+      // AUTO-RESUBSCRIBE if subscription is missing
       if (!subscription) {
+        console.log('🔔 Push Setup: No subscription found, attempting silent subscribe...');
         try {
-          const urlBase64ToUint8Array = (base64String: string) => {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
-            return outputArray;
-          };
           subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
           });
+          console.log('🔔 Push Setup: Silent subscribe SUCCESS');
         } catch (e) {
-          console.warn('Silent subscribe failed:', e);
+          console.error('🔔 Push Setup: Silent subscribe FAILED', e);
           return;
         }
       }
@@ -256,23 +277,29 @@ const App: React.FC = () => {
           ? currentDb.push_token
           : JSON.stringify(currentDb?.push_token);
 
-        // Only update if TRULY different (Smart Sync)
         // Compare endpoints primarily because expirationTime changes often
-        const localEndpoint = JSON.parse(localStr).endpoint;
-        const remoteEndpoint = remoteStr ? JSON.parse(remoteStr).endpoint : null;
+        let localEndpoint = '';
+        let remoteEndpoint = '';
+        try {
+          localEndpoint = JSON.parse(localStr).endpoint;
+          remoteEndpoint = remoteStr ? JSON.parse(remoteStr).endpoint : '';
+        } catch (parseErr) {
+          console.warn('🔔 Push Setup: Parse error, will force sync', parseErr);
+        }
 
-        if (localEndpoint !== remoteEndpoint) {
-          console.log('🔄 Updating Stale Push Token...');
+        // SYNC if endpoints differ OR if remote is empty/null
+        if (localEndpoint !== remoteEndpoint || !remoteEndpoint) {
+          console.log('🔄 Push Setup: Syncing token to DB...');
           await supabase.from('perfis').update({
             push_token: localStr
           }).eq('id', profile.id);
-          console.log('✅ Token Synced Successfully');
+          console.log('✅ Push Setup: Token Synced Successfully');
         } else {
-          console.log('✅ Push Token is Active & Valid');
+          console.log('✅ Push Setup: Token is Active & Valid (no sync needed)');
         }
       }
     } catch (err) {
-      console.error('Auto-Sync Error:', err);
+      console.error('🔔 Push Setup: Fatal Error', err);
     }
   };
 
