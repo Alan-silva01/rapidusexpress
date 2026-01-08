@@ -13,6 +13,7 @@ import { Layout } from './components/Layout';
 
 import DeliveriesHistory from './views/DeliveriesHistory';
 import PriceTables from './views/PriceTables';
+import NotificationManager from './utils/NotificationManager';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -35,7 +36,10 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session) {
-        if (event === 'SIGNED_IN') setCurrentView('dashboard');
+        if (event === 'SIGNED_IN') {
+          setCurrentView('dashboard');
+          NotificationManager.requestPermission();
+        }
         fetchProfile(session.user.id);
       }
       else {
@@ -46,8 +50,55 @@ const App: React.FC = () => {
     });
     authSubscription = subscription;
 
-    return () => authSubscription?.unsubscribe();
+    // Listener Realtime Global para Entregas
+    const channel = supabase
+      .channel('global_delivery_updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'entregas' }, (payload) => {
+        handleRealtimeEvent(payload);
+      })
+      .subscribe();
+
+    return () => {
+      authSubscription?.unsubscribe();
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const handleRealtimeEvent = (payload: any) => {
+    if (!profile) return;
+
+    const newData = payload.new as any;
+    const oldData = payload.old as any;
+
+    if (payload.eventType === 'INSERT') {
+      // Nova Entrega (Som para Admin)
+      if (profile.funcao === 'admin' && newData.status === 'pendente') {
+        NotificationManager.notify(
+          '🚀 Novo Pedido Recebido!',
+          `Um estabelecimento acabou de enviar um novo pedido de entrega.`,
+          '/inbox'
+        );
+      }
+    } else if (payload.eventType === 'UPDATE') {
+      // Entrega Atribuída (Som para Entregador)
+      if (profile.funcao === 'entregador' &&
+        newData.entregador_id === profile.id &&
+        oldData.status === 'pendente' &&
+        newData.status === 'atribuida') {
+        NotificationManager.notify(
+          '📦 Nova Entrega Atribuída!',
+          'Você recebeu uma nova entrega! Clique para aceitar.',
+          '/dashboard'
+        );
+      }
+
+      // Entrega Recusada ou Aceita (Notificar Admin)
+      if (profile.funcao === 'admin' && newData.status !== oldData.status) {
+        const msg = newData.status === 'aceita' ? 'Um motorista aceitou o pedido!' : `Status alterado para: ${newData.status}`;
+        NotificationManager.notify('Atualização de Entrega', msg);
+      }
+    }
+  };
 
   useEffect(() => {
     let watchId: number;
