@@ -25,12 +25,17 @@ const App: React.FC = () => {
   useEffect(() => {
     let authSubscription: any;
 
+    console.log('🏁 App: Initializing...');
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔑 App: Session status:', session ? 'Found' : 'Not found');
       setSession(session);
       if (session) {
         fetchProfile(session.user.id);
       }
-      else setLoading(false);
+      else {
+        console.log('⏹️ App: No session, stopping loading');
+        setLoading(false);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -234,13 +239,19 @@ const App: React.FC = () => {
 
 
   const fetchProfile = async (userId: string) => {
+    console.log('👤 App: Fetching profile for:', userId);
     try {
       const { data, error } = await supabase.from('perfis').select('*').eq('id', userId).single();
-      if (error) throw error;
+      if (error) {
+        console.error('❌ App: Profile fetch error:', error);
+        throw error;
+      }
+      console.log('✅ App: Profile loaded:', data.nome);
       setProfile(data);
     } catch (err) {
       console.error(err);
     } finally {
+      console.log('⏹️ App: Profile fetch complete, stopping loading');
       setLoading(false);
     }
   };

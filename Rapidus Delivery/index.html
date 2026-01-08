@@ -139,14 +139,6 @@
 
 <body>
   <div id="root"></div>
-  <script>
-    // Unregister any old Service Workers to avoid cache issues
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(reg => reg.unregister());
-      });
-    }
-  </script>
   <script>console.log('index.html loaded');</script>
   <script type="module" src="/index.tsx"></script>
 </body>

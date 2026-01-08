@@ -24,10 +24,5 @@ try {
   }
 }
 
-// Registrar Service Worker para notificações push
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(reg => console.log('SW registrado:', reg.scope))
-    .catch(err => console.error('SW erro:', err));
-}
+
 
