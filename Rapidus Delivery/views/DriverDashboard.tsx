@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Perfil } from '../types';
 import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History, Phone, Clock } from 'lucide-react';
+import Modal from '../components/Modal';
 
 interface DriverDashboardProps {
   profile: Perfil;
@@ -518,6 +519,21 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
             </div>
           </div>
         </div>
+      )}
+
+
+      {modalType === 'success' && (
+        <Modal
+          isOpen={true}
+          onClose={() => setModalType(null)}
+          type="success"
+          title="Entrega Concluída!"
+          message="Parabéns! A entrega foi registrada com sucesso. O valor já foi adicionado ao seu saldo."
+          primaryAction={{
+            label: 'Continuar',
+            onClick: () => setModalType(null)
+          }}
+        />
       )}
     </div>
   );

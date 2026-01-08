@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Inbox, ChevronRight, UserPlus, MapPin, CreditCard, Clock, Loader2, CheckCircle, Phone } from 'lucide-react';
 import { Perfil } from '../types';
+import Modal from '../components/Modal';
 
 interface PendingDelivery {
   data_hora: string;
@@ -23,6 +24,7 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
   const [loading, setLoading] = useState(true);
   const [assigningPath, setAssigningPath] = useState<{ storeIndex: number, deliveryIndex: number } | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'warning' | 'driver' | 'admin'; title: string; message: string; driverName?: string } | null>(null);
 
   useEffect(() => {
     fetchInboxData();
@@ -170,11 +172,22 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
       await fetchInboxData();
 
       if (driver) {
-        alert(`Entrega enviada para ${driver.nome}. Ele será notificado imediatamente.`);
+        setModal({
+          isOpen: true,
+          type: 'driver',
+          title: 'Entrega Enviada!',
+          message: `A entrega foi atribuída para ${driver.nome}. Ele será notificado imediatamente e poderá aceitar ou recusar.`,
+          driverName: driver.nome
+        });
       } else {
-        alert(`Entrega assumida por você.`);
+        setModal({
+          isOpen: true,
+          type: 'admin',
+          title: 'Entrega Assumida!',
+          message: 'Você assumiu esta entrega. Agora pode ir até a loja coletar o pedido e realizar a entrega.',
+        });
         if (onAssignSuccess) {
-          onAssignSuccess('self_delivery');
+          setTimeout(() => onAssignSuccess('self_delivery'), 1500);
         }
       }
     } catch (err: any) {
@@ -302,6 +315,21 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
             )
           ))}
         </div>
+      )}
+
+      {/* Modal de confirmação */}
+      {modal && (
+        <Modal
+          isOpen={modal.isOpen}
+          onClose={() => setModal(null)}
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          primaryAction={{
+            label: 'Entendido',
+            onClick: () => setModal(null)
+          }}
+        />
       )}
     </div>
   );
