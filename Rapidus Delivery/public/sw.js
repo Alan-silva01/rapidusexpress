@@ -39,13 +39,13 @@ self.addEventListener('push', event => {
     const title = data.title || 'Nova Notificação';
     const options = {
         body: data.body || 'Você tem uma nova atualização no Rapidus!',
-        icon: '/icons/icon-192.jpg',
-        badge: '/icons/icon-192.jpg',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200],
         data: {
             url: data.url || '/'
         },
-        tag: 'delivery-notification',
+        tag: 'delivery-notification-' + Date.now(),
         renotify: true
     };
 
