@@ -124,9 +124,6 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
         // Ao aceitar, já entra em rota (conforme pedido: "quando ele aceita fica em rota")
         const { error } = await supabase.from('entregas').update({ status: 'em_rota' }).eq('id', id);
         if (error) throw error;
-        // Fica indisponível ao aceitar
-        await supabase.from('perfis').update({ disponivel: false }).eq('id', profile.id);
-        setIsOnline(false);
       } else if (type === 'collect') {
         // Ao coletar (conforme pedido: "quando pega la fica coletado")
         const { error } = await supabase.from('entregas').update({ status: 'coletada' }).eq('id', id);
@@ -134,7 +131,6 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       } else if (type === 'finish') {
         const { error } = await supabase.rpc('finalizar_entrega', { p_entrega_id: id });
         if (error) throw error;
-        setIsOnline(true);
         setModalType('success');
       } else if (type === 'reject') {
         const { error } = await supabase.rpc('recusar_entrega', { p_entrega_id: id });
@@ -207,7 +203,9 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
           </div>
           <div>
             <h1 className="text-sm font-black text-gray-300">Olá, {driverProfile.nome.split(' ')[0]}</h1>
-            <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{isOnline ? 'Disponível' : 'Você está offline'}</p>
+            <p className={`text-[9px] font-black uppercase tracking-widest ${isOnline ? 'text-lime-500' : 'text-gray-600'}`}>
+              {isOnline ? 'Você está Ativo' : 'Você não está Ativo'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -220,10 +218,10 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
           <button
             onClick={toggleOnline}
             disabled={processing}
-            className={`h-9 px-4 rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest transition-all ${isOnline ? 'bg-orange-primary/10 text-orange-primary border border-orange-primary/20' : 'bg-white/5 text-gray-600'
+            className={`h-9 px-4 rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest transition-all ${isOnline ? 'bg-lime-500 text-white shadow-lg shadow-lime-500/20' : 'bg-white/5 text-gray-600'
               }`}
           >
-            {processing ? <Loader2 size={12} className="animate-spin" /> : <Power size={12} strokeWidth={3} />} {isOnline ? 'Ativo' : 'Entrar'}
+            {processing ? <Loader2 size={12} className="animate-spin" /> : <Power size={12} strokeWidth={3} />} {isOnline ? 'Ativo' : 'Ficar Ativo'}
           </button>
         </div>
       </header>
