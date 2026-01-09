@@ -14,17 +14,23 @@ const Login: React.FC = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+
+    console.log('🔐 Login: Attempting auth for:', cleanEmail);
 
     try {
       if (isRegistering) {
-        const { data: authData, error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: cleanPassword
+        });
         if (signUpError) throw signUpError;
         if (authData.user) {
           const { error: profileError } = await supabase.from('perfis').insert({
             id: authData.user.id,
             nome,
-            email,
+            email: cleanEmail,
             funcao: 'admin',
             disponivel: false
           });
@@ -33,10 +39,23 @@ const Login: React.FC = () => {
           setIsRegistering(false);
         }
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw signInError;
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPassword
+        });
+
+        if (signInError) {
+          console.error('❌ Login Error:', signInError);
+          // Customize message for common errors
+          if (signInError.message.includes('Invalid login credentials')) {
+            throw new Error('E-mail ou senha incorretos. Verifique se digitou corretamente.');
+          }
+          throw signInError;
+        }
+        console.log('✅ Login successful for:', cleanEmail);
       }
     } catch (err: any) {
+      console.error('⚠️ Auth Exception:', err);
       setError(err.message || 'Erro na autenticação');
     } finally {
       setLoading(false);

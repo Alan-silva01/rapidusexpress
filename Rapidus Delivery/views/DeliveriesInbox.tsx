@@ -178,10 +178,13 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
               entregador_nome: driver.nome,
               estabelecimento: store.nome_estabelecimento || store.numero_whatsapp,
               valor_frete: parseFloat(delivery.valor_frete) || 0,
-              endereco_cliente: delivery.endereco_cliente || []
+              endereco_cliente: delivery.endereco_cliente || [],
+              nome_cliente: delivery.nome_cliente || (delivery as any).nome || 'Cliente',
+              telefone_cliente: delivery.telefone_cliente || (delivery as any).telefone || (delivery as any).contato || 'N/A',
+              observacao: delivery.observacao || (delivery as any).observacoes || ''
             })
           });
-          console.log('📤 Webhook n8n notificado:', driver.nome);
+          console.log('📤 Webhook n8n notificado com dados completos:', driver.nome);
         } catch (webhookErr) {
           console.warn('n8n webhook failed (non-fatal):', webhookErr);
         }
