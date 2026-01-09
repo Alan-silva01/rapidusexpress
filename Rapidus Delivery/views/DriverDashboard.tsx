@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Perfil } from '../types';
-import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History, Phone, Clock, MapPin, ExternalLink } from 'lucide-react';
+import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History, Phone, Clock, MapPin, ExternalLink, MessageCircle } from 'lucide-react';
 import Modal from '../components/Modal';
 
 interface DriverDashboardProps {
@@ -181,6 +181,12 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
   };
 
+  const getWhatsAppUrl = (phone: string, storeName: string) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const message = encodeURIComponent(`Olá! Sou o entregador da ${storeName}.`);
+    return `https://wa.me/55${cleanPhone}?text=${message}`;
+  };
+
   const formatClientName = (delivery: any) => {
     if (delivery.nome_cliente) return delivery.nome_cliente;
     if (delivery.observacao) {
@@ -230,7 +236,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
             <section className="space-y-3">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-primary">Nova Solicitação de Entrega</h3>
               {assignedDeliveries.map(delivery => (
-                <div key={delivery.id} className="glass-card p-5 rounded-3xl border-orange-primary/20 bg-orange-primary/5">
+                <div key={delivery.id} className="glass-card p-5 rounded-3xl border-orange-primary/30 bg-orange-primary/5 animate-pulse-subtle">
                   <div onClick={() => setSelectedDelivery(delivery)} className="flex justify-between items-start mb-4 cursor-pointer">
                     <div>
                       <h4 className="text-sm font-black text-white">{delivery.estabelecimentos?.nome || 'Estabelecimento'}</h4>
@@ -239,15 +245,42 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                         <span className="text-orange-primary">R$ {parseFloat(profile.funcao === 'admin' ? delivery.valor_total : delivery.valor_entregador).toFixed(2)}</span>
                       </p>
                     </div>
-                    <div className="bg-orange-primary text-white px-2 py-1 rounded-md">
-                      <span className="text-[9px] font-black uppercase tracking-widest">Abrir</span>
+                    <div className="bg-orange-primary text-white px-3 py-1.5 rounded-xl">
+                      <span className="text-[9px] font-black uppercase tracking-widest">Ver Detalhes</span>
                     </div>
                   </div>
+
+                  <div className="space-y-3 mb-5">
+                    {/* Coleta */}
+                    <div className="flex gap-3 text-[10px]">
+                      <div className="w-1.5 h-1.5 rounded-full bg-orange-primary mt-1 shrink-0 shadow-[0_0_8px_rgba(255,77,0,0.5)]"></div>
+                      <div>
+                        <p className="text-gray-600 font-black uppercase tracking-widest text-[8px]">Coleta (Loja)</p>
+                        <p className="text-gray-300 font-medium leading-tight line-clamp-1">{formatAddress({ ...delivery, endereco_cliente: delivery.estabelecimentos?.endereco })}</p>
+                      </div>
+                    </div>
+                    {/* Entrega */}
+                    <div className="flex gap-3 text-[10px]">
+                      <div className="w-1.5 h-1.5 rounded-full bg-lime-500 mt-1 shrink-0 shadow-[0_0_8px_rgba(132,204,22,0.5)]"></div>
+                      <div>
+                        <p className="text-gray-600 font-black uppercase tracking-widest text-[8px]">Entrega (Cliente)</p>
+                        <p className="text-gray-300 font-medium leading-tight line-clamp-1">{formatAddress(delivery)}</p>
+                      </div>
+                    </div>
+                    {delivery.observacao && (
+                      <div className="bg-black/20 p-2 rounded-xl border border-white/5">
+                        <p className="text-[9px] text-orange-primary/80 font-bold italic line-clamp-2">
+                          {formatObservation(delivery.observacao)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => handleAction('reject', delivery.id)} className="h-11 rounded-2xl bg-white/5 text-gray-400 font-black text-[10px] uppercase flex items-center justify-center gap-2">
+                    <button onClick={() => handleAction('reject', delivery.id)} className="h-11 rounded-2xl bg-white/5 text-gray-400 font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-white/10 transition-colors">
                       <XCircle size={14} /> Recusar
                     </button>
-                    <button onClick={() => handleAction('accept', delivery.id)} className="h-11 rounded-2xl bg-orange-primary text-white font-black text-[10px] uppercase flex items-center justify-center gap-2 shadow-lg shadow-orange-primary/20">
+                    <button onClick={() => handleAction('accept', delivery.id)} className="h-11 rounded-2xl bg-orange-primary text-white font-black text-[10px] uppercase flex items-center justify-center gap-2 shadow-lg shadow-orange-primary/20 hover:scale-105 active:scale-95 transition-all">
                       {processing ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />} Aceitar
                     </button>
                   </div>
@@ -320,13 +353,24 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                               <div className="flex justify-between items-start mb-1">
                                 <p className="text-white font-black text-xs uppercase tracking-tight">{formatClientName(task)}</p>
                                 {task.telefone_cliente && (
-                                  <a
-                                    href={`tel:${task.telefone_cliente.replace(/\D/g, '')}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="flex items-center gap-1.5 bg-lime-500 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all"
-                                  >
-                                    <Phone size={10} fill="currentColor" /> Ligar
-                                  </a>
+                                  <div className="flex gap-2">
+                                    <a
+                                      href={getWhatsAppUrl(task.telefone_cliente, task.estabelecimentos?.nome || '')}
+                                      onClick={(e) => e.stopPropagation()}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1.5 bg-lime-600 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-600/20"
+                                    >
+                                      <MessageCircle size={12} fill="currentColor" /> WhatsApp
+                                    </a>
+                                    <a
+                                      href={`tel:${task.telefone_cliente.replace(/\D/g, '')}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="flex items-center gap-1.5 bg-lime-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-500/20"
+                                    >
+                                      <Phone size={10} fill="currentColor" /> Ligar
+                                    </a>
+                                  </div>
                                 )}
                               </div>
                               <p className="text-[10px] text-gray-400 font-medium leading-relaxed mb-3">
@@ -534,12 +578,22 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                       <p className="text-sm text-white font-black uppercase tracking-tight">{formatClientName(selectedDelivery)}</p>
                     </div>
                     {selectedDelivery.telefone_cliente && (
-                      <a
-                        href={`tel:${selectedDelivery.telefone_cliente.replace(/\D/g, '')}`}
-                        className="flex items-center gap-2 bg-lime-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-500/20 hover:scale-105 active:scale-95 transition-all"
-                      >
-                        <Phone size={14} fill="currentColor" /> Ligar
-                      </a>
+                      <div className="flex gap-2">
+                        <a
+                          href={getWhatsAppUrl(selectedDelivery.telefone_cliente, selectedDelivery.estabelecimentos?.nome || '')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 bg-lime-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-600/20 hover:scale-105 active:scale-95 transition-all"
+                        >
+                          <MessageCircle size={14} fill="currentColor" /> WhatsApp
+                        </a>
+                        <a
+                          href={`tel:${selectedDelivery.telefone_cliente.replace(/\D/g, '')}`}
+                          className="flex items-center gap-2 bg-lime-500 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-500/20 hover:scale-105 active:scale-95 transition-all"
+                        >
+                          <Phone size={14} fill="currentColor" /> Ligar
+                        </a>
+                      </div>
                     )}
                   </div>
                   <div>
