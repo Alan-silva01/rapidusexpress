@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Perfil } from '../types';
-import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History, Phone, Clock } from 'lucide-react';
+import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History, Phone, Clock, MapPin, ExternalLink } from 'lucide-react';
 import Modal from '../components/Modal';
 
 interface DriverDashboardProps {
@@ -172,13 +172,13 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
 
   const formatAddress = (delivery: any) => {
     const addr = delivery.endereco_cliente;
-    if (!addr) {
-      // Se não tem endereço mas tem observação, e a observação parece um endereço (tem números ou vírgulas?)
-      // Na dúvida, se não tem endereço, não inventamos, mas mostramos a observação com destaque
-      return 'Endereço não informado';
-    }
+    if (!addr) return 'Endereço não informado';
     if (Array.isArray(addr)) return addr.join(', ');
     return addr;
+  };
+
+  const getMapsUrl = (address: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
   };
 
   const formatClientName = (delivery: any) => {
@@ -286,26 +286,72 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
 
                       <div className={`expandable-content ${isExpanded ? 'expanded' : ''}`}>
                         <div className="expandable-inner space-y-4">
-                          <div className="bg-black/20 p-4 rounded-2xl text-[10px] text-gray-400 font-medium space-y-2 border border-white/5">
-                            <p><span className="text-gray-600 uppercase font-black tracking-widest text-[8px]">Coleta:</span> {formatAddress({ ...task, endereco_cliente: task.estabelecimentos?.endereco })}</p>
-                            <p><span className="text-lime-500 uppercase font-black tracking-widest text-[8px]">Entrega:</span> {formatAddress(task)}</p>
-                            {task.telefone_cliente && (
-                              <p className="flex items-center gap-2">
-                                <span className="text-gray-600 uppercase font-black tracking-widest text-[8px]">Telefone:</span>
-                                <a
-                                  href={`tel:${task.telefone_cliente.replace(/\D/g, '')}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-lime-500 font-bold flex items-center gap-1 hover:text-lime-400 transition-colors"
-                                >
-                                  <Phone size={10} /> {task.telefone_cliente}
-                                </a>
+                          <div className="space-y-3">
+                            {/* Seção de Coleta */}
+                            <div className="bg-orange-primary/5 p-4 rounded-2xl border border-orange-primary/10">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-6 h-6 bg-orange-primary/20 rounded-full flex items-center justify-center text-orange-primary">
+                                  <PackageCheck size={12} />
+                                </div>
+                                <span className="text-[10px] font-black text-orange-primary uppercase tracking-widest">Ponto de Coleta</span>
+                              </div>
+                              <p className="text-white font-black text-xs mb-1 uppercase tracking-tight">{task.estabelecimentos?.nome}</p>
+                              <p className="text-[10px] text-gray-400 font-medium leading-relaxed mb-3">
+                                {formatAddress({ ...task, endereco_cliente: task.estabelecimentos?.endereco })}
                               </p>
-                            )}
+                              <a
+                                href={getMapsUrl(formatAddress({ ...task, endereco_cliente: task.estabelecimentos?.endereco }))}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 w-full h-9 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase text-gray-300 transition-colors"
+                              >
+                                <MapPin size={12} /> Navegar para Coleta
+                              </a>
+                            </div>
+
+                            {/* Seção de Entrega */}
+                            <div className="bg-lime-500/5 p-4 rounded-2xl border border-lime-500/10">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-6 h-6 bg-lime-500/20 rounded-full flex items-center justify-center text-lime-500">
+                                  <MapPin size={12} />
+                                </div>
+                                <span className="text-[10px] font-black text-lime-500 uppercase tracking-widest">Ponto de Entrega</span>
+                              </div>
+                              <div className="flex justify-between items-start mb-1">
+                                <p className="text-white font-black text-xs uppercase tracking-tight">{formatClientName(task)}</p>
+                                {task.telefone_cliente && (
+                                  <a
+                                    href={`tel:${task.telefone_cliente.replace(/\D/g, '')}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center gap-1.5 bg-lime-500 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all"
+                                  >
+                                    <Phone size={10} fill="currentColor" /> Ligar
+                                  </a>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-gray-400 font-medium leading-relaxed mb-3">
+                                {formatAddress(task)}
+                              </p>
+                              <a
+                                href={getMapsUrl(formatAddress(task))}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 w-full h-9 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase text-gray-300 transition-colors"
+                              >
+                                <Navigation size={12} /> Navegar para Entrega
+                              </a>
+                            </div>
+
+                            {/* Observações */}
                             {task.observacao && (
-                              <p className="bg-orange-primary/5 p-2 rounded-lg mt-1 border border-orange-primary/10 italic text-gray-300">
-                                <span className="text-orange-primary uppercase font-black tracking-widest text-[8px] not-italic mr-1">Obs:</span>
-                                {formatObservation(task.observacao)}
-                              </p>
+                              <div className="bg-zinc-900 p-3 rounded-2xl border border-white/5">
+                                <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                  <AlertTriangle size={10} className="text-orange-primary" /> Observação Importante
+                                </p>
+                                <p className="text-[10px] text-orange-primary/90 font-bold italic leading-relaxed">
+                                  {formatObservation(task.observacao)}
+                                </p>
+                              </div>
                             )}
                           </div>
 
@@ -445,53 +491,78 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
             </div>
 
             <div className="space-y-6">
-              <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
-                <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em] mb-4">📍 Dados da Entrega (Cliente)</h3>
-                <div className="space-y-4">
+              {/* Seção Coleta */}
+              <div className="glass-card p-6 rounded-3xl border-orange-primary/10 bg-orange-primary/5">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-orange-primary/20 rounded-full flex items-center justify-center text-orange-primary">
+                    <PackageCheck size={16} />
+                  </div>
+                  <h3 className="text-[10px] font-black text-orange-primary uppercase tracking-[0.2em]">Ponto de Coleta (Loja)</h3>
+                </div>
+                <div className="space-y-3 mb-6">
+                  <div>
+                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Estabelecimento</p>
+                    <p className="text-sm text-white font-black uppercase tracking-tight">{selectedDelivery.estabelecimentos?.nome || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Endereço de Retirada</p>
+                    <p className="text-xs text-gray-300 font-medium leading-relaxed">{formatAddress({ ...selectedDelivery, endereco_cliente: selectedDelivery.estabelecimentos?.endereco })}</p>
+                  </div>
+                </div>
+                <a
+                  href={getMapsUrl(formatAddress({ ...selectedDelivery, endereco_cliente: selectedDelivery.estabelecimentos?.endereco }))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-3 w-full h-12 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase text-white transition-all"
+                >
+                  <MapPin size={14} /> Abrir GPS para Coleta
+                </a>
+              </div>
+
+              {/* Seção Entrega */}
+              <div className="glass-card p-6 rounded-3xl border-lime-500/10 bg-lime-500/5">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-lime-500/20 rounded-full flex items-center justify-center text-lime-500">
+                    <MapPin size={16} />
+                  </div>
+                  <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em]">Ponto de Entrega (Cliente)</h3>
+                </div>
+                <div className="space-y-4 mb-6">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Destinatário</p>
-                      <p className="text-[14px] text-white font-black uppercase tracking-tight">{formatClientName(selectedDelivery)}</p>
+                      <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Cliente</p>
+                      <p className="text-sm text-white font-black uppercase tracking-tight">{formatClientName(selectedDelivery)}</p>
                     </div>
                     {selectedDelivery.telefone_cliente && (
-                      <div className="text-right">
-                        <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Contato</p>
-                        <a
-                          href={`tel:${selectedDelivery.telefone_cliente.replace(/\D/g, '')}`}
-                          className="text-[11px] text-lime-500 font-black flex items-center gap-1 justify-end hover:text-lime-400"
-                        >
-                          <Phone size={12} /> {selectedDelivery.telefone_cliente}
-                        </a>
-                      </div>
+                      <a
+                        href={`tel:${selectedDelivery.telefone_cliente.replace(/\D/g, '')}`}
+                        className="flex items-center gap-2 bg-lime-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-500/20 hover:scale-105 active:scale-95 transition-all"
+                      >
+                        <Phone size={14} fill="currentColor" /> Ligar
+                      </a>
                     )}
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Endereço de Entrega</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery)}</p>
+                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Endereço do Destino</p>
+                    <p className="text-xs text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery)}</p>
                   </div>
                   {selectedDelivery.observacao && (
-                    <div>
-                      <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">📝 Observações</p>
-                      <p className="text-[11px] text-orange-primary/80 font-medium leading-relaxed italic">
+                    <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                      <p className="text-[9px] font-black text-orange-primary uppercase tracking-widest mb-1">📝 Observações</p>
+                      <p className="text-[11px] text-gray-200 font-medium italic">
                         {formatObservation(selectedDelivery.observacao)}
                       </p>
                     </div>
                   )}
                 </div>
-              </div>
-
-              <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.02]">
-                <h3 className="text-[10px] font-black text-orange-primary uppercase tracking-[0.2em] mb-4">🏠 Dados da Retirada (Loja)</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Loja / Estabelecimento</p>
-                    <p className="text-[12px] text-white font-black uppercase">{selectedDelivery.estabelecimentos?.nome || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Endereço de Coleta</p>
-                    <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery.estabelecimentos?.endereco)}</p>
-                  </div>
-                </div>
+                <a
+                  href={getMapsUrl(formatAddress(selectedDelivery))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-3 w-full h-12 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase text-white transition-all"
+                >
+                  <Navigation size={14} /> Abrir GPS para Entrega
+                </a>
               </div>
 
               {selectedDelivery.status === 'atribuida' ? (
