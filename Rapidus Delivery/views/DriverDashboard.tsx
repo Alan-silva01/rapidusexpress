@@ -350,23 +350,23 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                                 </div>
                                 <span className="text-[10px] font-black text-lime-500 uppercase tracking-widest">Ponto de Entrega</span>
                               </div>
-                              <div className="flex justify-between items-start mb-1">
-                                <p className="text-white font-black text-xs uppercase tracking-tight">{formatClientName(task)}</p>
+                              <div className="flex flex-col gap-2 mb-1">
+                                <p className="text-white font-black text-xs uppercase tracking-tight line-clamp-2">{formatClientName(task)}</p>
                                 {task.telefone_cliente && (
-                                  <div className="flex gap-2">
+                                  <div className="flex gap-2 w-full">
                                     <a
                                       href={getWhatsAppUrl(task.telefone_cliente, task.estabelecimentos?.nome || '')}
                                       onClick={(e) => e.stopPropagation()}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="flex items-center gap-1.5 bg-lime-600 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-600/20"
+                                      className="flex-1 flex items-center justify-center gap-1.5 bg-lime-600 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-600/20"
                                     >
                                       <MessageCircle size={12} fill="currentColor" /> WhatsApp
                                     </a>
                                     <a
                                       href={`tel:${task.telefone_cliente.replace(/\D/g, '')}`}
                                       onClick={(e) => e.stopPropagation()}
-                                      className="flex items-center gap-1.5 bg-lime-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-500/20"
+                                      className="flex-1 flex items-center justify-center gap-1.5 bg-lime-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-500/20"
                                     >
                                       <Phone size={10} fill="currentColor" /> Ligar
                                     </a>
@@ -572,24 +572,24 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                   <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em]">Ponto de Entrega (Cliente)</h3>
                 </div>
                 <div className="space-y-4 mb-6">
-                  <div className="flex justify-between items-start">
-                    <div>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex-1">
                       <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Cliente</p>
-                      <p className="text-sm text-white font-black uppercase tracking-tight">{formatClientName(selectedDelivery)}</p>
+                      <p className="text-sm text-white font-black uppercase tracking-tight break-words">{formatClientName(selectedDelivery)}</p>
                     </div>
                     {selectedDelivery.telefone_cliente && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 w-full mt-1">
                         <a
                           href={getWhatsAppUrl(selectedDelivery.telefone_cliente, selectedDelivery.estabelecimentos?.nome || '')}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 bg-lime-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-600/20 hover:scale-105 active:scale-95 transition-all"
+                          className="flex-1 flex items-center justify-center gap-2 bg-lime-600 text-white px-4 py-3 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-600/20 hover:scale-105 active:scale-95 transition-all"
                         >
                           <MessageCircle size={14} fill="currentColor" /> WhatsApp
                         </a>
                         <a
                           href={`tel:${selectedDelivery.telefone_cliente.replace(/\D/g, '')}`}
-                          className="flex items-center gap-2 bg-lime-500 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-500/20 hover:scale-105 active:scale-95 transition-all"
+                          className="flex-1 flex items-center justify-center gap-2 bg-lime-500 text-white px-4 py-3 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-500/20 hover:scale-105 active:scale-95 transition-all"
                         >
                           <Phone size={14} fill="currentColor" /> Ligar
                         </a>
