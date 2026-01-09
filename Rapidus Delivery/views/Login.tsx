@@ -22,15 +22,14 @@ const Login: React.FC = () => {
 
     try {
       if (isRegistering) {
-        // Verificar limite de Admin antes de cadastrar (Máximo 2)
-        const { count, error: countError } = await supabase
-          .from('perfis')
-          .select('id', { count: 'exact', head: true })
-          .eq('funcao', 'admin');
+        // Verificar limite de Admin antes de cadastrar (Máximo 2) usando RPC pública
+        const { data: count, error: countError } = await supabase
+          .rpc('get_user_count_by_role', { role_name: 'admin' });
 
-        if (countError) throw countError;
-
-        if ((count || 0) >= 2) {
+        if (countError) {
+          console.error('Erro ao verificar limites:', countError);
+          // Se falhar o RPC, continuamos mas o trigger do banco barrará se necessário
+        } else if ((count || 0) >= 2) {
           throw new Error('Limite de 2 Administradores atingido no sistema.');
         }
 
@@ -69,7 +68,13 @@ const Login: React.FC = () => {
       }
     } catch (err: any) {
       console.error('⚠️ Auth Exception:', err);
-      setError(err.message || 'Erro na autenticação');
+      // Extrair mensagem do trigger se houver
+      const dbError = err.message || '';
+      if (dbError.includes('Limite de')) {
+        setError(dbError);
+      } else {
+        setError(err.message || 'Erro na autenticação');
+      }
     } finally {
       setLoading(false);
     }
