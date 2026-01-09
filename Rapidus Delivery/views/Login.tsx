@@ -8,6 +8,7 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nome, setNome] = useState('');
+  const [funcao, setFuncao] = useState<'admin' | 'entregador'>('entregador');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,6 +22,19 @@ const Login: React.FC = () => {
 
     try {
       if (isRegistering) {
+        // Verificar limites antes de cadastrar
+        const { count, error: countError } = await supabase
+          .from('perfis')
+          .select('id', { count: 'exact', head: true })
+          .eq('funcao', funcao);
+
+        if (countError) throw countError;
+
+        const limit = funcao === 'admin' ? 2 : 5;
+        if ((count || 0) >= limit) {
+          throw new Error(`Limite de ${limit} ${funcao === 'admin' ? 'Administradores' : 'Entregadores'} atingido.`);
+        }
+
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email: cleanEmail,
           password: cleanPassword
@@ -31,7 +45,7 @@ const Login: React.FC = () => {
             id: authData.user.id,
             nome,
             email: cleanEmail,
-            funcao: 'admin',
+            funcao: funcao,
             disponivel: false
           });
           if (profileError) throw profileError;
@@ -84,7 +98,28 @@ const Login: React.FC = () => {
 
           <form onSubmit={handleAuth} className="space-y-4">
             {isRegistering && (
-              <InputGroup label="Nome Completo" icon={<UserPlus size={18} />} value={nome} onChange={setNome} placeholder="Seu nome" autoComplete="off" />
+              <>
+                <InputGroup label="Nome Completo" icon={<UserPlus size={18} />} value={nome} onChange={setNome} placeholder="Seu nome" autoComplete="off" />
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-gray-700 uppercase tracking-widest ml-1">Sou um</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFuncao('entregador')}
+                      className={`flex-1 h-12 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${funcao === 'entregador' ? 'border-orange-primary bg-orange-primary/10 text-orange-primary' : 'border-white/5 bg-white/5 text-gray-600'}`}
+                    >
+                      <Bike size={16} /> Entregador
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFuncao('admin')}
+                      className={`flex-1 h-12 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${funcao === 'admin' ? 'border-orange-primary bg-orange-primary/10 text-orange-primary' : 'border-white/5 bg-white/5 text-gray-600'}`}
+                    >
+                      <ShieldCheck size={16} /> Admin
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
             <InputGroup
               label="E-mail"

@@ -74,6 +74,17 @@ const DriverManagement: React.FC = () => {
     e.preventDefault();
     setSaving(true);
     try {
+      // Verificar limite extra no salvamento
+      const { count, error: countError } = await supabase
+        .from('perfis')
+        .select('id', { count: 'exact', head: true })
+        .eq('funcao', 'entregador');
+
+      if (countError) throw countError;
+      if ((count || 0) >= 5) {
+        throw new Error('Limite de 5 entregadores atingido.');
+      }
+
       // Usando RPC ou Edge Function para criar Auth + Perfil sem deslogar o Admin
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
@@ -185,11 +196,12 @@ const DriverManagement: React.FC = () => {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-black uppercase tracking-tighter">Equipe Rapidus</h1>
-          <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Gestão de entregadores</p>
+          <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Gestão de entregadores ({drivers.length}/5)</p>
         </div>
         <button
-          onClick={() => setIsCreating(true)}
-          className="w-10 h-10 bg-orange-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-primary/20"
+          onClick={() => drivers.length < 5 ? setIsCreating(true) : alert('Limite de 5 entregadores atingido.')}
+          disabled={drivers.length >= 5}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg transition-all ${drivers.length >= 5 ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-orange-primary shadow-orange-primary/20 hover:scale-105 active:scale-95'}`}
         >
           <Plus size={20} />
         </button>
