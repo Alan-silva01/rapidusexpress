@@ -423,7 +423,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                             </button>
                           )}
 
-                          {task.status === 'em_rota' && (
+                          {task.status === 'em_rota' && profile.funcao === 'admin' && (
                             <button onClick={(e) => { e.stopPropagation(); handleAction('reject', task.id); }} className="w-full h-10 bg-white/5 text-gray-600 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">
                               Desistir da Entrega
                             </button>
