@@ -101,9 +101,23 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
           };
         });
 
+        // Deduplicar: se a entrega já está no banco (refusedData), removemos do JSON para não aparecer 2 vezes
+        const filteredJsonDeliveries = formattedJsonDeliveries.filter(jd => {
+          const isInDb = formattedDbDeliveries.some(dbd =>
+            dbd.endereco_cliente.join('|') === jd.endereco_cliente.join('|') &&
+            (dbd.data_hora === jd.data_hora || Math.abs(new Date(dbd.data_hora).getTime() - new Date(jd.data_hora).getTime()) < 60000)
+          );
+          return !isInDb;
+        });
+
+        // Unificar e Ordenar por Data (Mais antigos primeiro - pedido do user)
+        const allDeliveries = [...filteredJsonDeliveries, ...formattedDbDeliveries].sort((a, b) => {
+          return new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime();
+        });
+
         return {
           ...store,
-          entregas: [...formattedJsonDeliveries, ...formattedDbDeliveries]
+          entregas: allDeliveries
         };
       });
 
