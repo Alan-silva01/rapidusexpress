@@ -137,21 +137,18 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
         if (error) throw error;
 
         // Notificar admins sobre a recusa
-        try {
-          await fetch('https://iqsdjmhuznrfczefbluk.functions.supabase.co/push-notification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'REJECT',
-              record: {
-                driver_name: driverProfile?.nome || 'Entregador',
-                delivery_id: id
-              }
-            })
-          });
-        } catch (pushErr) {
-          console.warn('Falha ao notificar admins:', pushErr);
-        }
+        // Notificar admins sobre a recusa (sem focar no await para evitar travamento da UI)
+        fetch('https://iqsdjmhuznrfczefbluk.functions.supabase.co/push-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'REJECT',
+            record: {
+              driver_name: driverProfile?.nome || 'Entregador',
+              delivery_id: id
+            }
+          })
+        }).catch(pushErr => console.warn('Falha silenciosa ao notificar admins:', pushErr));
 
         // Limpeza agressiva local
         setAssignedDeliveries(prev => prev.filter(d => d.id !== id));

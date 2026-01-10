@@ -1,20 +1,8 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import webpush from "npm:web-push@3.6.4"
 
 // Keys must be set in Supabase Secrets
-const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")
-const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")
-
-if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-    console.error("Missing VAPID Keys in Environment")
-}
-
-webpush.setVapidDetails(
-    'mailto:alan@rapidus.delivery',
-    VAPID_PUBLIC_KEY!,
-    VAPID_PRIVATE_KEY!
-)
+// ONESIGNAL_APP_ID (optional if hardcoded)
+// ONESIGNAL_REST_API_KEY (REQUIRED)
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -34,15 +22,14 @@ serve(async (req) => {
             const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
             const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-            const adminResponse = await fetch(`${supabaseUrl}/rest/v1/perfis?funcao=eq.admin&select=push_token`, {
+            const adminResponse = await fetch(`${supabaseUrl}/rest/v1/perfis?funcao=eq.admin&select=id`, {
                 headers: {
                     'apikey': supabaseKey,
                     'Authorization': `Bearer ${supabaseKey}`
                 }
             })
             const admins = await adminResponse.json()
-
-            const notifications = []
+            const adminIds = admins.map((a: any) => a.id)
 
             // TITLE & BODY
             let title = "RAPIDUS - NOVA ENTREGA 🚀"
@@ -66,29 +53,31 @@ serve(async (req) => {
             // CLICK URL
             const clickUrl = "https://rapidusexpress.vercel.app/?view=inbox"
 
-            for (const admin of admins) {
-                if (admin.push_token) {
-                    try {
-                        let sub = admin.push_token
-                        if (typeof sub === 'string') {
-                            try { sub = JSON.parse(sub) } catch (e) { console.error("Bad JSON token", e) }
-                        }
+            // Dispatch OneSignal Notification
+            const onesignalAppId = Deno.env.get("ONESIGNAL_APP_ID") || "43084836-6231-48b3-ad89-8dd3cd984b91"
+            const onesignalApiKey = Deno.env.get("ONESIGNAL_REST_API_KEY")
 
-                        if (sub && sub.endpoint) {
-                            const promise = webpush.sendNotification(sub, JSON.stringify({
-                                title: title,
-                                body: body,
-                                url: clickUrl
-                            }))
-                            notifications.push(promise)
-                        }
-                    } catch (e) {
-                        console.error("LOG: Push Error", e)
-                    }
-                }
+            if (onesignalApiKey && adminIds.length > 0) {
+                const osResponse = await fetch("https://onesignal.com/api/v1/notifications", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Basic ${onesignalApiKey}`
+                    },
+                    body: JSON.stringify({
+                        app_id: onesignalAppId,
+                        include_external_user_ids: adminIds,
+                        headings: { en: title, pt: title },
+                        contents: { en: body, pt: body },
+                        web_url: clickUrl
+                    })
+                })
+                const osResult = await osResponse.json()
+                console.log("LOG: OneSignal Result", osResult)
+            } else {
+                console.error("Missing OneSignal Key or Admins:", { hasKey: !!onesignalApiKey, adminCount: adminIds.length })
             }
 
-            await Promise.allSettled(notifications)
             return new Response(JSON.stringify({ message: "Processed" }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             })
