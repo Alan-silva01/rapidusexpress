@@ -21,7 +21,7 @@ serve(async (req) => {
         const { record, type, table } = await req.json()
         console.log("LOG: Payload received", { type, table, record })
 
-        if (type === 'INSERT' && (table === 'entregas' || table === 'clientes')) {
+        if ((type === 'INSERT' && (table === 'entregas' || table === 'clientes')) || type === 'REJECT') {
             const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
             const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
@@ -35,33 +35,31 @@ serve(async (req) => {
 
             const notifications = []
 
-            // TITLE
-            const title = "RAPIDUS - NOVA ENTREGA 🚀"
+            // TITLE & BODY
+            let title = "RAPIDUS - NOVA ENTREGA 🚀"
+            let body = ""
 
-            // PARSE VALUES
-            // 'observacao' now contains "Loja: Drogasil - obs" thanks to the trigger hack
-            // We can use it directly or try to clean it up if we want.
-            // But let's trust the trigger's formatting for the body.
-            const val = parseFloat(record.valor_total || record.valor_frete || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-            const rawObs = record.observacao || ""
+            if (type === 'INSERT') {
+                const val = parseFloat(record.valor_total || record.valor_frete || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                const rawObs = record.observacao || ""
 
-            // "Loja: Drogasil - obs" -> "Drogasil"
-            let estabName = "Uma loja"
-            if (rawObs.startsWith("Loja: ")) {
-                const parts = rawObs.split(" - ")
-                estabName = parts[0].replace("Loja: ", "")
+                let estabName = "Uma loja"
+                if (rawObs.startsWith("Loja: ")) {
+                    const parts = rawObs.split(" - ")
+                    estabName = parts[0].replace("Loja: ", "")
+                }
+                body = `${estabName} solicitou uma entrega\nValor: ${val}`
+            } else if (type === 'REJECT') {
+                title = "RAPIDUS - ENTREGA RECUSADA ❌"
+                body = `Entregador ${record.driver_name} recusou a entrega`
             }
 
-            const body = `${estabName} solicitou uma entrega\nValor: ${val}`
-
             // CLICK URL
-            // Using query param to handle routing client-side (bypasses 404)
             const clickUrl = "https://rapidusexpress.vercel.app/?view=inbox"
 
             for (const admin of admins) {
                 if (admin.push_token) {
                     try {
-                        // Handle token string parsing
                         let sub = admin.push_token
                         if (typeof sub === 'string') {
                             try { sub = JSON.parse(sub) } catch (e) { console.error("Bad JSON token", e) }
