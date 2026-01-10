@@ -292,7 +292,11 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
                         </div>
                         <div className="text-right">
                           <p className="text-[14px] font-black text-lime-500 tracking-tighter">R$ {parseFloat(delivery.valor_frete).toFixed(2)}</p>
-                          <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Frete</p>
+                          {(delivery as any).recusada ? (
+                            <p className="text-[8px] font-black text-red-500 uppercase tracking-widest animate-pulse">RECUSADA</p>
+                          ) : (
+                            <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Frete</p>
+                          )}
                         </div>
                       </div>
 

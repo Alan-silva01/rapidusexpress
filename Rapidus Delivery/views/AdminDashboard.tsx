@@ -6,7 +6,8 @@ import { Perfil } from '../types';
 import NewClientForm from './NewClientForm';
 
 // Helper functions moved to module level
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: string, isRejected: boolean = false) => {
+  if (isRejected && status === 'aguardando') return 'text-red-500 font-black';
   switch (status) {
     case 'atribuida': return 'text-orange-primary animate-pulse';
     case 'aceita': return 'text-sky-400';
@@ -90,6 +91,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
             showNotification('Entrega Concluída!', 'success');
           } else if (newData.status === 'em_rota') {
             showNotification('Um entregador aceitou um pedido!', 'info');
+          } else if (newData.status === 'aguardando' && newData.recusada) {
+            showNotification('Um entregador recusou uma entrega!', 'alert');
           }
         }
       })
@@ -290,7 +293,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewChange, profile, 
                 activity={activity}
                 isExpanded={expandedId === activity.id}
                 onToggle={() => toggleExpand(activity.id)}
-                color={getStatusColor(activity.status)}
+                color={getStatusColor(activity.status, activity.recusada)}
               />
             ))
           )}
@@ -339,7 +342,10 @@ const QuickAction = ({ icon, label, active, onClick }: any) => (
 
 const ActivityItem = ({ activity, isExpanded, onToggle, color }: any) => {
   const store = activity.estabelecimentos?.nome || 'Estabelecimento';
-  const status = activity.status.charAt(0).toUpperCase() + activity.status.slice(1).replace('_', ' ');
+  let status = activity.status.charAt(0).toUpperCase() + activity.status.slice(1).replace('_', ' ');
+  if (activity.status === 'aguardando' && activity.recusada) {
+    status = 'RECUSADA';
+  }
   const driver = activity.perfis?.nome || 'Pendente';
   const time = formatTime(activity.criado_at);
   const address = formatAddress(activity);

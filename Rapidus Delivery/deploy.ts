@@ -16,7 +16,16 @@ webpush.setVapidDetails(
     VAPID_PRIVATE_KEY!
 )
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 serve(async (req) => {
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders })
+    }
+
     try {
         const { record, type, table } = await req.json()
         console.log("LOG: Payload received", { type, table, record })
@@ -80,12 +89,19 @@ serve(async (req) => {
             }
 
             await Promise.allSettled(notifications)
-            return new Response(JSON.stringify({ message: "Processed" }), { headers: { 'Content-Type': 'application/json' } })
+            return new Response(JSON.stringify({ message: "Processed" }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
         }
 
-        return new Response(JSON.stringify({ message: "Ignored" }), { headers: { 'Content-Type': 'application/json' } })
+        return new Response(JSON.stringify({ message: "Ignored" }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
 
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
     }
 })

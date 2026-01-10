@@ -144,7 +144,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
             body: JSON.stringify({
               type: 'REJECT',
               record: {
-                driver_name: driverProfile.nome,
+                driver_name: driverProfile?.nome || 'Entregador',
                 delivery_id: id
               }
             })
