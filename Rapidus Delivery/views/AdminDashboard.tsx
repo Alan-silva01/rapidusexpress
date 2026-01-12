@@ -351,8 +351,8 @@ const ActivityItem = ({ activity, isExpanded, onToggle, color }: any) => {
   const address = formatAddress(activity);
 
   return (
-    <div className={`glass-card p-4 rounded-2xl border-white/5 bg-white/[0.02] transition-all duration-300 ${isExpanded ? 'ring-1 ring-white/10' : ''}`}>
-      <div onClick={onToggle} className="flex items-center justify-between cursor-pointer group">
+    <div className={`glass-card p-4 rounded-2xl border-white/5 bg-white/[0.02] transition-all duration-300 overflow-hidden ${isExpanded ? 'ring-1 ring-white/10' : ''}`}>
+      <div onClick={onToggle} className="flex items-center justify-between cursor-pointer group overflow-hidden">
         <div className="flex items-center gap-4 flex-1">
           <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40 shrink-0"></div>
           <div className="flex-1 min-w-0">
