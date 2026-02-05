@@ -21,12 +21,24 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<'dashboard' | 'inbox' | 'profile' | 'finance' | 'map' | 'drivers' | 'new_client' | 'self_delivery' | 'history' | 'prices'>('dashboard');
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'searching' | 'active' | 'denied' | 'error'>('idle');
+  const [profileFetched, setProfileFetched] = useState(false);
 
   useEffect(() => {
     let authSubscription: any;
+    let isMounted = true;
 
     console.log('🏁 App: Initializing...');
+
+    // Safety timeout - prevent infinite loading (10 seconds max)
+    const loadingTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('⚠️ App: Loading timeout reached (10s), forcing stop');
+        setLoading(false);
+      }
+    }, 10000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
       console.log('🔑 App: Session status:', session ? 'Found' : 'Not found');
       setSession(session);
       if (session) {
@@ -39,16 +51,22 @@ const App: React.FC = () => {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      console.log('🔔 App: Auth event:', event);
       setSession(session);
       if (session) {
         if (event === 'SIGNED_IN') {
           setCurrentView('dashboard');
-          // OneSignal handles notification permission
+          setProfileFetched(false); // Reset on new login
         }
-        fetchProfile(session.user.id);
+        // Only fetch if not already fetched or on new login
+        if (!profileFetched || event === 'SIGNED_IN') {
+          fetchProfile(session.user.id);
+        }
       }
       else {
         setProfile(null);
+        setProfileFetched(false);
         setCurrentView('dashboard');
         setLoading(false);
       }
@@ -70,6 +88,8 @@ const App: React.FC = () => {
       .subscribe();
 
     return () => {
+      isMounted = false;
+      clearTimeout(loadingTimeout);
       authSubscription?.unsubscribe();
       supabase.removeChannel(channel);
     };
@@ -248,8 +268,10 @@ const App: React.FC = () => {
       }
       console.log('✅ App: Profile loaded:', data.nome);
       setProfile(data);
+      setProfileFetched(true);
     } catch (err) {
       console.error(err);
+      setProfileFetched(true); // Mark as attempted even on error to prevent loop
     } finally {
       console.log('⏹️ App: Profile fetch complete, stopping loading');
       setLoading(false);
