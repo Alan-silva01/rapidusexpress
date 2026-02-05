@@ -71,7 +71,7 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
           }));
 
         // Formatar entregas do JSON com fallbacks
-        const formattedJsonDeliveries = jsonDeliveries.map((d: any) => {
+        const formattedJsonDeliveries = jsonDeliveries.map((d: any, index: number) => {
           const obs = d.observacao || d.observacoes || '';
 
           // Prioridade 1: Campo endereco_cliente (vinda do n8n ou manual)
@@ -97,7 +97,8 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
             nome_cliente: d.nome_cliente || d.nome || (obs.length < 40 ? obs.replace('Extraída do WhatsApp: ', '') : 'Cliente'),
             telefone_cliente: d.telefone_cliente || d.telefone,
             endereco_cliente: finalAddress.length > 0 ? finalAddress : ['N/A'],
-            isFromDB: false
+            isFromDB: false,
+            originalIndex: index // Guarda o índice original do array JSON
           };
         });
 
@@ -151,9 +152,16 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
         });
         if (error) throw error;
       } else {
+        // Usa o originalIndex salvo anteriormente, pois deliveryIndex é apenas visual da lista ordenada
+        const jsonIndex = (delivery as any).originalIndex;
+        
+        if (jsonIndex === undefined || jsonIndex === null) {
+          throw new Error('Índice original da entrega não encontrado.');
+        }
+
         const { error } = await supabase.rpc('atribuir_entrega_do_json', {
           p_cliente_numero: store.numero_whatsapp,
-          p_json_index: deliveryIndex,
+          p_json_index: jsonIndex,
           p_entregador_id: effectiveDriverId,
           p_porcentagem_admin: driver?.porcentagem_lucro_admin || 20,
           p_valor_fixo_admin: driver?.valor_fixo_admin || 0
