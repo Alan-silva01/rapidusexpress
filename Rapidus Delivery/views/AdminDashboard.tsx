@@ -351,16 +351,18 @@ const ActivityItem = ({ activity, isExpanded, onToggle, color }: any) => {
   const address = formatAddress(activity);
 
   return (
-    <div className={`glass-card p-4 rounded-2xl border-white/5 bg-white/[0.02] transition-all duration-300 overflow-hidden ${isExpanded ? 'ring-1 ring-white/10' : ''}`}>
+    <div className={`glass-card p-3 rounded-2xl border-white/5 bg-white/[0.02] transition-all duration-300 overflow-hidden ${isExpanded ? 'ring-1 ring-white/10' : ''}`}>
       <div onClick={onToggle} className="flex items-center justify-between cursor-pointer group overflow-hidden">
-        <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-center gap-3 flex-1">
           <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40 shrink-0"></div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-1">
               <h4 className="text-xs font-black tracking-tight truncate">{store}</h4>
-              <span className="text-[9px] font-bold text-gray-700 shrink-0 ml-2">{time}</span>
+              <span className="text-[9px] font-bold text-gray-700 shrink-0">{time}</span>
             </div>
-            <p className="text-[10px] text-gray-500 font-medium truncate mt-0.5 leading-tight">{address || 'Sem endereço'}</p>
+            <p className="text-[10px] text-gray-500 font-medium mt-0.5 leading-tight line-clamp-2 text-ellipsis" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {address || 'Sem endereço'}
+            </p>
             <div className="flex items-center gap-2 mt-1">
               <p className={`text-[8px] font-black uppercase tracking-widest ${color}`}>{status}</p>
               <span className="text-[10px] text-gray-800 shrink-0">•</span>
@@ -368,8 +370,8 @@ const ActivityItem = ({ activity, isExpanded, onToggle, color }: any) => {
             </div>
           </div>
         </div>
-        <div className="ml-3 shrink-0 flex items-center gap-2">
-          <p className="text-xs font-black text-white">R$ {parseFloat(activity.valor_total).toFixed(2)}</p>
+        <div className="ml-2 shrink-0 flex items-center gap-1">
+          <p className="text-[11px] font-black text-white whitespace-nowrap">R$ {parseFloat(activity.valor_total).toFixed(2)}</p>
           <ChevronRight size={14} className={`text-gray-800 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
         </div>
       </div>

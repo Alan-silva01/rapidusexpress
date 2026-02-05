@@ -126,8 +126,8 @@ const DeliveriesHistory: React.FC<DeliveriesHistoryProps> = ({ profileId, onBack
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="text-right flex items-center gap-2">
-                                        <p className="text-sm font-black tracking-tighter text-white">R$ {parseFloat(delivery.valor_entregador).toFixed(2)}</p>
+                                    <div className="text-right flex items-center gap-2 shrink-0">
+                                        <p className="text-sm font-black tracking-tighter text-white whitespace-nowrap">R$ {parseFloat(delivery.valor_entregador).toFixed(2)}</p>
                                         <ChevronRight size={12} className={`text-gray-800 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-orange-primary' : ''}`} />
                                     </div>
                                 </div>
