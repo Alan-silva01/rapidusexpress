@@ -154,7 +154,7 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
       } else {
         // Usa o originalIndex salvo anteriormente, pois deliveryIndex é apenas visual da lista ordenada
         const jsonIndex = (delivery as any).originalIndex;
-        
+
         if (jsonIndex === undefined || jsonIndex === null) {
           throw new Error('Índice original da entrega não encontrado.');
         }
@@ -243,6 +243,77 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
     }
   };
 
+  const handleUpdateValue = async (store: any, index: number, isDb: boolean, deliveryId: string | null, newValue: string) => {
+    const numericValue = parseFloat(newValue.replace(',', '.'));
+    if (isNaN(numericValue) || numericValue < 0) {
+      alert('Valor inválido');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (isDb && deliveryId) {
+        const { error } = await supabase
+          .from('entregas')
+          .update({ valor_total: numericValue }) // O trigger ou a query deve cuidar do resto se necessário, mas aqui atualizamos o base
+          .eq('id', deliveryId);
+
+        if (error) throw error;
+      } else {
+        const delivery = store.entregas[index];
+        const jsonIndex = delivery.originalIndex;
+        if (jsonIndex === undefined || jsonIndex === null) {
+          throw new Error('Índice original da entrega não encontrado.');
+        }
+
+        const { error } = await supabase.rpc('editar_valor_entrega_json', {
+          p_cliente_numero: store.numero_whatsapp,
+          p_json_index: jsonIndex,
+          p_novo_valor: numericValue
+        });
+        if (error) throw error;
+      }
+      await fetchInboxData(true);
+    } catch (err: any) {
+      alert('Erro ao atualizar valor: ' + err.message);
+    } finally {
+      setLoading(false);
+      setModal(null); // Fechar qualquer modal de edição se houver (vamos usar prompt simples por enquanto ou modal customizado depois)
+    }
+  };
+
+  const handleDelete = async (store: any, index: number, isDb: boolean, deliveryId: string | null) => {
+    if (!confirm('Tem certeza que deseja EXCLUIR esta entrega permanentemente?')) return;
+
+    setLoading(true);
+    try {
+      if (isDb && deliveryId) {
+        const { error } = await supabase
+          .from('entregas')
+          .delete()
+          .eq('id', deliveryId);
+        if (error) throw error;
+      } else {
+        const delivery = store.entregas[index];
+        const jsonIndex = delivery.originalIndex;
+        if (jsonIndex === undefined || jsonIndex === null) {
+          throw new Error('Índice original da entrega não encontrado.');
+        }
+
+        const { error } = await supabase.rpc('excluir_entrega_do_json', {
+          p_cliente_numero: store.numero_whatsapp,
+          p_json_index: jsonIndex
+        });
+        if (error) throw error;
+      }
+      await fetchInboxData(true);
+    } catch (err: any) {
+      alert('Erro ao excluir: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade pb-24">
       <header>
@@ -294,12 +365,37 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-[14px] font-black text-lime-500 tracking-tighter">R$ {parseFloat(delivery.valor_frete).toFixed(2)}</p>
-                          {(delivery as any).recusada ? (
-                            <p className="text-[8px] font-black text-red-500 uppercase tracking-widest animate-pulse">RECUSADA</p>
-                          ) : (
-                            <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Frete</p>
-                          )}
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-[14px] font-black text-lime-500 tracking-tighter">R$ {parseFloat(delivery.valor_frete).toFixed(2)}</p>
+                              <button
+                                onClick={() => {
+                                  const novoValor = prompt('Novo valor do frete:', delivery.valor_frete);
+                                  if (novoValor) handleUpdateValue(store, dIdx, (delivery as any).isFromDB, (delivery as any).id, novoValor);
+                                }}
+                                className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 hover:text-white"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {(delivery as any).recusada ? (
+                                <p className="text-[8px] font-black text-red-500 uppercase tracking-widest animate-pulse">RECUSADA</p>
+                              ) : (
+                                <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Frete</p>
+                              )}
+                              <button
+                                onClick={() => handleDelete(store, dIdx, (delivery as any).isFromDB, (delivery as any).id)}
+                                className="p-1 hover:bg-red-500/10 rounded-full transition-colors group"
+                                title="Excluir entrega"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 group-hover:text-red-500">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
