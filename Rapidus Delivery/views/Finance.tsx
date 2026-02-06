@@ -152,270 +152,276 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
   };
 
   return (
-    <div className="space-y-6 pb-24 animate-fade">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-black uppercase tracking-tighter">{profile?.funcao === 'admin' ? 'Caixa Geral' : 'Meu Caixa'}</h1>
-          <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Fluxo de pagamentos</p>
-        </div>
-        {profile?.funcao === 'admin' && (
-          <button
-            onClick={() => setShowModal(true)}
-            className="w-10 h-10 bg-orange-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-primary/20"
-          >
-            <Plus size={20} />
-          </button>
-        )}
-      </header>
+    <>
+      <div className="space-y-6 pb-24 animate-fade">
+        <header className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-black uppercase tracking-tighter">{profile?.funcao === 'admin' ? 'Caixa Geral' : 'Meu Caixa'}</h1>
+            <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Fluxo de pagamentos</p>
+          </div>
+          {profile?.funcao === 'admin' && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="w-10 h-10 bg-orange-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-primary/20"
+            >
+              <Plus size={20} />
+            </button>
+          )}
+        </header>
 
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-orange-primary" size={32} />
-        </div>
-      ) : (
-        <>
-          <section className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex-1 bg-white/5 rounded-2xl p-2 flex items-center gap-2 border border-white/5">
-                <Calendar size={14} className="text-gray-600 ml-2" />
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent text-[10px] font-black text-gray-300 outline-none w-full" />
-                <span className="text-gray-700 text-[10px] font-black uppercase">Até</span>
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent text-[10px] font-black text-gray-300 outline-none w-full" />
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-orange-primary" size={32} />
+          </div>
+        ) : (
+          <>
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex-1 bg-white/5 rounded-2xl p-2 flex items-center gap-2 border border-white/5">
+                  <Calendar size={14} className="text-gray-600 ml-2" />
+                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent text-[10px] font-black text-gray-300 outline-none w-full" />
+                  <span className="text-gray-700 text-[10px] font-black uppercase">Até</span>
+                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent text-[10px] font-black text-gray-300 outline-none w-full" />
+                </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              <div className="glass-card p-6 rounded-[2.5rem] bg-gradient-to-br from-orange-primary/20 to-transparent border-orange-primary/10">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-primary flex items-center justify-center text-white shadow-xl shadow-orange-primary/20">
-                    <Wallet size={24} />
+              <div className="grid grid-cols-1 gap-3">
+                <div className="glass-card p-6 rounded-[2.5rem] bg-gradient-to-br from-orange-primary/20 to-transparent border-orange-primary/10">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-orange-primary flex items-center justify-center text-white shadow-xl shadow-orange-primary/20">
+                      <Wallet size={24} />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Total de Caixa (Dinheiro Real)</p>
+                      <p className="text-3xl font-black text-white tracking-tighter">R$ {(stats.recebido - stats.pago).toFixed(2)}</p>
+                      <p className="text-[8px] text-gray-700 font-bold uppercase mt-1">Saldo em mãos hoje</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Total de Caixa (Dinheiro Real)</p>
-                    <p className="text-3xl font-black text-white tracking-tighter">R$ {(stats.recebido - stats.pago).toFixed(2)}</p>
-                    <p className="text-[8px] text-gray-700 font-bold uppercase mt-1">Saldo em mãos hoje</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
+                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">
+                        {profile?.funcao === 'admin' ? 'Comissões Parceiros' : 'Total das Entregas'}
+                      </p>
+                      <p className="text-xl font-black text-white tracking-tighter">R$ {(profile?.funcao === 'admin' ? stats.comissoes : stats.proprio).toFixed(2)}</p>
+                    </div>
+                    <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.04]">
+                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">
+                        {profile?.funcao === 'admin' ? 'Entrega feita por você' : 'Saldo Pendente'}
+                      </p>
+                      <p className="text-xl font-black text-orange-primary tracking-tighter">
+                        R$ {(profile?.funcao === 'admin' ? stats.proprio : (resumoDrivers.find(d => d.id === profile?.id)?.saldo_a_pagar || 0)).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
-                    <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">
-                      {profile?.funcao === 'admin' ? 'Comissões Parceiros' : 'Total das Entregas'}
-                    </p>
-                    <p className="text-xl font-black text-white tracking-tighter">R$ {(profile?.funcao === 'admin' ? stats.comissoes : stats.proprio).toFixed(2)}</p>
-                  </div>
-                  <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.04]">
-                    <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">
-                      {profile?.funcao === 'admin' ? 'Entrega feita por você' : 'Saldo Pendente'}
-                    </p>
-                    <p className="text-xl font-black text-orange-primary tracking-tighter">
-                      R$ {(profile?.funcao === 'admin' ? stats.proprio : (resumoDrivers.find(d => d.id === profile?.id)?.saldo_a_pagar || 0)).toFixed(2)}
-                    </p>
-                  </div>
-                </div>
+
+                {profile?.funcao === 'admin' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
+                        <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">PAGOS ENTREGADORES</p>
+                        <p className="text-sm font-bold text-white tracking-tighter">R$ {stats.pago.toFixed(2)}</p>
+                      </div>
+                      <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
+                        <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">RECEBIDO (LOJAS)</p>
+                        <p className="text-sm font-bold text-lime-500 tracking-tighter">R$ {stats.recebido.toFixed(2)}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="glass-card p-5 rounded-3xl border-lime-500/10 bg-lime-500/[0.02]">
+                        <p className="text-[8px] font-black text-lime-600 uppercase mb-1 tracking-widest">Lojas Pendentes</p>
+                        <p className="text-sm font-black text-white tracking-tighter text-lime-500">R$ {globalTotals.receivables.toFixed(2)}</p>
+                      </div>
+                      <div className="glass-card p-5 rounded-3xl border-orange-primary/10 bg-orange-primary/[0.02]">
+                        <p className="text-[8px] font-black text-orange-primary uppercase mb-1 tracking-widest">Entregadores Pendentes</p>
+                        <p className="text-sm font-black text-white tracking-tighter text-orange-primary">R$ {globalTotals.payables.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {profile?.funcao === 'admin' && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
-                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">PAGOS ENTREGADORES</p>
-                      <p className="text-sm font-bold text-white tracking-tighter">R$ {stats.pago.toFixed(2)}</p>
+                <div className="py-2">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-700 px-1 mb-3">Relatório de Ganhos (Lucro Estimado)</h3>
+                  <div className="grid grid-cols-2 gap-3 mb-2">
+                    <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5">
+                      <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Ganhos em Comissões</p>
+                      <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.comissoes.toFixed(2)}</p>
+                      <p className="text-[7px] text-gray-800 uppercase font-black">Das entregas de terceiros</p>
                     </div>
-                    <div className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.02]">
-                      <p className="text-[9px] font-black text-gray-700 uppercase mb-1 tracking-widest">RECEBIDO (LOJAS)</p>
-                      <p className="text-sm font-bold text-lime-500 tracking-tighter">R$ {stats.recebido.toFixed(2)}</p>
+                    <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 text-right">
+                      <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Suas Próprias Entregas</p>
+                      <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.proprio.toFixed(2)}</p>
+                      <p className="text-[7px] text-gray-800 uppercase font-black">Seu ganho 100% (Sem taxas)</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section className="space-y-6">
+              {profile?.funcao === 'admin' && (
+                <div className="flex items-center gap-2 px-1">
+                  <div className="flex-1 bg-white/5 rounded-2xl h-12 flex items-center px-4 gap-3 border border-white/5">
+                    <Search size={16} className="text-gray-700" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      placeholder="Buscar loja ou motoboy..."
+                      className="bg-transparent text-xs font-bold text-white outline-none w-full placeholder:text-gray-800"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {profile?.funcao === 'admin' && (
+                <>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-lime-500 rounded-full" />
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Lojas em Aberto</h3>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {resumoStores
+                        .filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .map(store => (
+                          <FinanceRow
+                            key={store.id}
+                            title={store.nome}
+                            subtitle={`${store.total_entregas || 0} entregas totais`}
+                            value={store.saldo_faltante || 0}
+                            orange={(store.saldo_faltante || 0) > 0}
+                            periodLabel="Recebido"
+                            periodValue={store.periodReceived}
+                            onClick={() => openPaymentModal(store.id, 'recebimento_estabelecimento', store.saldo_faltante)}
+                          />
+                        ))}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="glass-card p-5 rounded-3xl border-lime-500/10 bg-lime-500/[0.02]">
-                      <p className="text-[8px] font-black text-lime-600 uppercase mb-1 tracking-widest">Lojas Pendentes</p>
-                      <p className="text-sm font-black text-white tracking-tighter text-lime-500">R$ {globalTotals.receivables.toFixed(2)}</p>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-orange-primary rounded-full" />
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Pendências Motoboys</h3>
+                      </div>
                     </div>
-                    <div className="glass-card p-5 rounded-3xl border-orange-primary/10 bg-orange-primary/[0.02]">
-                      <p className="text-[8px] font-black text-orange-primary uppercase mb-1 tracking-widest">Entregadores Pendentes</p>
-                      <p className="text-sm font-black text-white tracking-tighter text-orange-primary">R$ {globalTotals.payables.toFixed(2)}</p>
+                    <div className="space-y-2">
+                      {resumoDrivers
+                        .filter(d => d.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .map(driver => (
+                          <FinanceRow
+                            key={driver.id}
+                            title={driver.nome}
+                            subtitle="Dívida acumulada"
+                            value={driver.saldo_a_pagar || 0}
+                            orange={(driver.saldo_a_pagar || 0) > 0}
+                            periodLabel="Pago"
+                            periodValue={driver.periodPaid}
+                            onClick={() => openPaymentModal(driver.id, 'pagamento_entregador', driver.saldo_a_pagar)}
+                          />
+                        ))}
                     </div>
                   </div>
                 </>
               )}
-            </div>
 
-            {profile?.funcao === 'admin' && (
-              <div className="py-2">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-700 px-1 mb-3">Relatório de Ganhos (Lucro Estimado)</h3>
-                <div className="grid grid-cols-2 gap-3 mb-2">
-                  <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5">
-                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Ganhos em Comissões</p>
-                    <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.comissoes.toFixed(2)}</p>
-                    <p className="text-[7px] text-gray-800 uppercase font-black">Das entregas de terceiros</p>
+              {/* Seção de Histórico */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-2">
+                    <History size={16} className="text-orange-primary" />
+                    <h2 className="text-[10px] font-black uppercase text-gray-500 tracking-widest">{profile.funcao === 'admin' ? 'Histórico Local' : 'Minhas Transações'}</h2>
                   </div>
-                  <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 text-right">
-                    <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-1">Suas Próprias Entregas</p>
-                    <p className="text-lg font-black text-white tracking-tighter italic">R$ {stats.proprio.toFixed(2)}</p>
-                    <p className="text-[7px] text-gray-800 uppercase font-black">Seu ganho 100% (Sem taxas)</p>
-                  </div>
+                  <p className="text-[8px] font-bold text-gray-700 uppercase">{transactions.length} Lançamentos</p>
                 </div>
-              </div>
-            )}
-          </section>
 
-          <section className="space-y-6">
-            {profile?.funcao === 'admin' && (
-              <div className="flex items-center gap-2 px-1">
-                <div className="flex-1 bg-white/5 rounded-2xl h-12 flex items-center px-4 gap-3 border border-white/5">
-                  <Search size={16} className="text-gray-700" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    placeholder="Buscar loja ou motoboy..."
-                    className="bg-transparent text-xs font-bold text-white outline-none w-full placeholder:text-gray-800"
-                  />
-                </div>
-              </div>
-            )}
-
-            {profile?.funcao === 'admin' && (
-              <>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1 h-3 bg-lime-500 rounded-full" />
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Lojas em Aberto</h3>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {resumoStores
-                      .filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase()))
-                      .map(store => (
-                        <FinanceRow
-                          key={store.id}
-                          title={store.nome}
-                          subtitle={`${store.total_entregas || 0} entregas totais`}
-                          value={store.saldo_faltante || 0}
-                          orange={(store.saldo_faltante || 0) > 0}
-                          periodLabel="Recebido"
-                          periodValue={store.periodReceived}
-                          onClick={() => openPaymentModal(store.id, 'recebimento_estabelecimento', store.saldo_faltante)}
+                <div className="glass-card rounded-[2.5rem] border-white/5 bg-white/[0.01] overflow-hidden">
+                  <div className="p-4 space-y-3">
+                    {transactions.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <p className="text-[10px] text-gray-700 font-bold uppercase">Sem movimentações no período</p>
+                      </div>
+                    ) : (
+                      transactions.map((tx) => (
+                        <TransactionRow
+                          key={tx.id}
+                          tipo={tx.tipo}
+                          valor={tx.valor}
+                          data={tx.data_transacao}
+                          metodo={tx.metodo_pagamento}
+                          obs={tx.observacao}
+                          entidade={
+                            tx.tipo === 'recebimento_estabelecimento'
+                              ? resumoStores.find(s => s.id === tx.entidade_id)?.nome || 'Loja'
+                              : allProfiles.find(p => p.id === tx.entidade_id)?.nome || 'Usuário'
+                          }
+                          isAdmin={profile.funcao === 'admin'}
                         />
-                      ))}
+                      ))
+                    )}
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1 h-3 bg-orange-primary rounded-full" />
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Pendências Motoboys</h3>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {resumoDrivers
-                      .filter(d => d.nome.toLowerCase().includes(searchTerm.toLowerCase()))
-                      .map(driver => (
-                        <FinanceRow
-                          key={driver.id}
-                          title={driver.nome}
-                          subtitle="Dívida acumulada"
-                          value={driver.saldo_a_pagar || 0}
-                          orange={(driver.saldo_a_pagar || 0) > 0}
-                          periodLabel="Pago"
-                          periodValue={driver.periodPaid}
-                          onClick={() => openPaymentModal(driver.id, 'pagamento_entregador', driver.saldo_a_pagar)}
-                        />
-                      ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Seção de Histórico */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between px-2">
-                <div className="flex items-center gap-2">
-                  <History size={16} className="text-orange-primary" />
-                  <h2 className="text-[10px] font-black uppercase text-gray-500 tracking-widest">{profile.funcao === 'admin' ? 'Histórico Local' : 'Minhas Transações'}</h2>
-                </div>
-                <p className="text-[8px] font-bold text-gray-700 uppercase">{transactions.length} Lançamentos</p>
-              </div>
-
-              <div className="glass-card rounded-[2.5rem] border-white/5 bg-white/[0.01] overflow-hidden">
-                <div className="p-4 space-y-3">
-                  {transactions.length === 0 ? (
-                    <div className="py-12 text-center">
-                      <p className="text-[10px] text-gray-700 font-bold uppercase">Sem movimentações no período</p>
-                    </div>
-                  ) : (
-                    transactions.map((tx) => (
-                      <TransactionRow
-                        key={tx.id}
-                        tipo={tx.tipo}
-                        valor={tx.valor}
-                        data={tx.data_transacao}
-                        metodo={tx.metodo_pagamento}
-                        obs={tx.observacao}
-                        entidade={
-                          tx.tipo === 'recebimento_estabelecimento'
-                            ? resumoStores.find(s => s.id === tx.entidade_id)?.nome || 'Loja'
-                            : allProfiles.find(p => p.id === tx.entidade_id)?.nome || 'Usuário'
-                        }
-                        isAdmin={profile.funcao === 'admin'}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
+              </section>
             </section>
-          </section>
-        </>
-      )}
+          </>
+        )}
 
-      {showModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm" onClick={() => setShowModal(false)}>
-          <div className="glass-card w-full max-w-sm p-8 rounded-[2.5rem] border-white/10 shadow-2xl relative animate-fade" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-black uppercase tracking-tighter">Lançamento</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-600"><X size={20} /></button>
-            </div>
-            <form onSubmit={handleAddTransaction} className="space-y-5">
-              <div className="flex p-1 bg-white/5 rounded-2xl">
-                <button type="button" onClick={() => setTipo('recebimento_estabelecimento')} className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'recebimento_estabelecimento' ? 'bg-orange-primary text-white' : 'text-gray-600'}`}>Loja</button>
-                <button type="button" onClick={() => setTipo('pagamento_entregador')} className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'pagamento_entregador' ? 'bg-orange-primary text-white' : 'text-gray-600'}`}>Motoboy</button>
+        {/* Modal moved outside animate-fade div to fix positioning context */}
+      </div>
+
+      {
+        showModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm" onClick={() => setShowModal(false)}>
+            <div className="glass-card w-full max-w-sm p-8 rounded-[2.5rem] border-white/10 shadow-2xl relative animate-fade" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-black uppercase tracking-tighter">Lançamento</h2>
+                <button onClick={() => setShowModal(false)} className="text-gray-600"><X size={20} /></button>
               </div>
-              <div>
-                <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Entidade</label>
-                <select value={entidadeId} onChange={(e) => setEntidadeId(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-[11px] font-bold text-white outline-none focus:border-orange-primary/20 appearance-none">
-                  <option value="">Selecione...</option>
-                  {tipo === 'recebimento_estabelecimento' ? resumoStores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>) : resumoDrivers.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Observação (Opcional)</label>
-                <input type="text" value={observacao} onChange={(e) => setObservacao(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-orange-primary/20" placeholder="Ex: Pagamento parcial da semana" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Valor</label>
-                  <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-orange-primary/20" placeholder="0,00" />
+              <form onSubmit={handleAddTransaction} className="space-y-5">
+                <div className="flex p-1 bg-white/5 rounded-2xl">
+                  <button type="button" onClick={() => setTipo('recebimento_estabelecimento')} className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'recebimento_estabelecimento' ? 'bg-orange-primary text-white' : 'text-gray-600'}`}>Loja</button>
+                  <button type="button" onClick={() => setTipo('pagamento_entregador')} className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'pagamento_entregador' ? 'bg-orange-primary text-white' : 'text-gray-600'}`}>Motoboy</button>
                 </div>
                 <div>
-                  <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Método</label>
-                  <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-[11px] font-bold text-white outline-none focus:border-orange-primary/20 appearance-none">
-                    <option value="PIX">PIX</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartão">Cartão</option>
+                  <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Entidade</label>
+                  <select value={entidadeId} onChange={(e) => setEntidadeId(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-[11px] font-bold text-white outline-none focus:border-orange-primary/20 appearance-none">
+                    <option value="">Selecione...</option>
+                    {tipo === 'recebimento_estabelecimento' ? resumoStores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>) : resumoDrivers.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
                   </select>
                 </div>
-              </div>
-              <button disabled={saving} className="w-full h-14 bg-orange-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-orange-primary/20 transition-all active:scale-95 disabled:opacity-50">
-                {saving ? <Loader2 className="animate-spin mx-auto" size={20} /> : 'Confirmar Lançamento'}
-              </button>
-            </form>
+                <div>
+                  <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Observação (Opcional)</label>
+                  <input type="text" value={observacao} onChange={(e) => setObservacao(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-orange-primary/20" placeholder="Ex: Pagamento parcial da semana" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Valor</label>
+                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-orange-primary/20" placeholder="0,00" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Método</label>
+                    <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-[11px] font-bold text-white outline-none focus:border-orange-primary/20 appearance-none">
+                      <option value="PIX">PIX</option>
+                      <option value="Dinheiro">Dinheiro</option>
+                      <option value="Cartão">Cartão</option>
+                    </select>
+                  </div>
+                </div>
+                <button disabled={saving} className="w-full h-14 bg-orange-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-orange-primary/20 transition-all active:scale-95 disabled:opacity-50">
+                  {saving ? <Loader2 className="animate-spin mx-auto" size={20} /> : 'Confirmar Lançamento'}
+                </button>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </>
   );
 };
 
