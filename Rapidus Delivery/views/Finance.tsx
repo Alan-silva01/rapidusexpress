@@ -38,6 +38,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
 
   const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [displayCount, setDisplayCount] = useState(30);
 
   useEffect(() => {
     fetchFinanceData();
@@ -348,22 +349,33 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                         <p className="text-[10px] text-gray-700 font-bold uppercase">Sem movimentações no período</p>
                       </div>
                     ) : (
-                      transactions.map((tx) => (
-                        <TransactionRow
-                          key={tx.id}
-                          tipo={tx.tipo}
-                          valor={tx.valor}
-                          data={tx.data_transacao}
-                          metodo={tx.metodo_pagamento}
-                          obs={tx.observacao}
-                          entidade={
-                            tx.tipo === 'recebimento_estabelecimento'
-                              ? resumoStores.find(s => s.id === tx.entidade_id)?.nome || 'Loja'
-                              : allProfiles.find(p => p.id === tx.entidade_id)?.nome || 'Usuário'
-                          }
-                          isAdmin={profile.funcao === 'admin'}
-                        />
-                      ))
+                      <>
+                        {transactions.slice(0, displayCount).map((tx) => (
+                          <TransactionRow
+                            key={tx.id}
+                            tipo={tx.tipo}
+                            valor={tx.valor}
+                            data={tx.data_transacao}
+                            metodo={tx.metodo_pagamento}
+                            obs={tx.observacao}
+                            entidade={
+                              tx.tipo === 'recebimento_estabelecimento'
+                                ? resumoStores.find(s => s.id === tx.entidade_id)?.nome || 'Loja'
+                                : allProfiles.find(p => p.id === tx.entidade_id)?.nome || 'Usuário'
+                            }
+                            isAdmin={profile.funcao === 'admin'}
+                          />
+                        ))}
+
+                        {transactions.length > displayCount && (
+                          <button
+                            onClick={() => setDisplayCount(prev => prev + 30)}
+                            className="w-full py-3 mt-2 text-[10px] uppercase font-black tracking-widest text-gray-500 hover:text-white transition-colors border-t border-white/5"
+                          >
+                            Carregar mais...
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
