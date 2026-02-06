@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Perfil } from '../types';
-import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History, Phone, Clock, MapPin, ExternalLink, MessageCircle } from 'lucide-react';
+import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History, Phone, MapPin, MessageCircle, Sun } from 'lucide-react';
 import Modal from '../components/Modal';
 
 interface DriverDashboardProps {
@@ -16,6 +16,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
   const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [driverProfile, setDriverProfile] = useState<Perfil>(profile);
+  const [highContrast, setHighContrast] = useState(false);
 
   const [assignedDeliveries, setAssignedDeliveries] = useState<any[]>([]);
   const [activeDeliveries, setActiveDeliveries] = useState<any[]>([]);
@@ -89,7 +90,6 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       setHistoryDeliveries(finalizadas.slice(0, 20));
       setTodayDeliveries(hojeOnly);
 
-      // Calcular ganho total acumulado (soma de todas as finalizadas)
       const total = finalizadas.reduce((acc, curr) => acc + parseFloat(profile.funcao === 'admin' ? curr.valor_total : curr.valor_entregador), 0);
       setTotalEarned(total);
     } catch (err) {
@@ -121,11 +121,9 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
     setProcessing(true);
     try {
       if (type === 'accept') {
-        // Ao aceitar, já entra em rota (conforme pedido: "quando ele aceita fica em rota")
         const { error } = await supabase.from('entregas').update({ status: 'em_rota' }).eq('id', id);
         if (error) throw error;
       } else if (type === 'collect') {
-        // Ao coletar (conforme pedido: "quando pega la fica coletado")
         const { error } = await supabase.from('entregas').update({ status: 'coletada' }).eq('id', id);
         if (error) throw error;
       } else if (type === 'finish') {
@@ -136,8 +134,6 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
         const { error } = await supabase.rpc('recusar_entrega', { p_entrega_id: id });
         if (error) throw error;
 
-        // Notificar admins sobre a recusa
-        // Notificar admins sobre a recusa (sem focar no await para evitar travamento da UI)
         fetch('https://iqsdjmhuznrfczefbluk.functions.supabase.co/push-notification', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -150,7 +146,6 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
           })
         }).catch(pushErr => console.warn('Falha silenciosa ao notificar admins:', pushErr));
 
-        // Limpeza agressiva local
         setAssignedDeliveries(prev => prev.filter(d => d.id !== id));
         setActiveDeliveries(prev => prev.filter(d => d.id !== id));
         if (selectedDelivery?.id === id) setSelectedDelivery(null);
@@ -201,7 +196,6 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
     if (delivery.nome_cliente) return delivery.nome_cliente;
     if (delivery.observacao) {
       const cleanObs = delivery.observacao.replace('Extraída do WhatsApp: ', '');
-      // Se a observação parece um nome (curta e sem muitos números)
       if (cleanObs.length < 40) return cleanObs;
     }
     return 'N/A';
@@ -223,6 +217,15 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Botão de Alto Contraste */}
+          <button
+            onClick={() => setHighContrast(!highContrast)}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${highContrast ? 'bg-white text-black' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+            title="Modo Alto Contraste (Sol)"
+          >
+            <Sun size={16} strokeWidth={3} />
+          </button>
+
           <button
             onClick={() => fetchDeliveries()}
             className="w-9 h-9 bg-white/5 rounded-xl flex items-center justify-center text-gray-500 hover:text-orange-primary transition-colors"
@@ -333,37 +336,37 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                         <div className="expandable-inner space-y-4">
                           <div className="space-y-3">
                             {/* Seção de Coleta */}
-                            <div className="bg-orange-primary/5 p-4 rounded-2xl border border-orange-primary/10">
+                            <div className={`p-4 rounded-2xl border ${highContrast ? 'bg-white border-gray-200' : 'bg-orange-primary/5 border-orange-primary/10'}`}>
                               <div className="flex items-center gap-2 mb-2">
-                                <div className="w-6 h-6 bg-orange-primary/20 rounded-full flex items-center justify-center text-orange-primary">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${highContrast ? 'bg-orange-500 text-white' : 'bg-orange-primary/20 text-orange-primary'}`}>
                                   <PackageCheck size={12} />
                                 </div>
-                                <span className="text-[10px] font-black text-orange-primary uppercase tracking-widest">Ponto de Coleta</span>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${highContrast ? 'text-gray-800' : 'text-orange-primary'}`}>Ponto de Coleta</span>
                               </div>
-                              <p className="text-white font-black text-xs mb-1 uppercase tracking-tight">{task.estabelecimentos?.nome}</p>
-                              <p className="text-[10px] text-gray-400 font-medium leading-relaxed mb-3">
+                              <p className={`font-black uppercase tracking-tight mb-1 ${highContrast ? 'text-black text-lg' : 'text-white text-xs'}`}>{task.estabelecimentos?.nome}</p>
+                              <p className={`font-medium leading-tight mb-3 ${highContrast ? 'text-black text-xl font-bold' : 'text-[10px] text-gray-400'}`}>
                                 {formatAddress({ ...task, endereco_cliente: task.estabelecimentos?.endereco })}
                               </p>
                               <a
                                 href={getMapsUrl(formatAddress({ ...task, endereco_cliente: task.estabelecimentos?.endereco }))}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-2 w-full h-9 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase text-gray-300 transition-colors"
+                                className={`flex items-center justify-center gap-2 w-full h-11 rounded-xl text-[10px] font-black uppercase transition-colors ${highContrast ? 'bg-black text-white hover:bg-gray-800' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                               >
-                                <MapPin size={12} /> Navegar para Coleta
+                                <MapPin size={14} /> Navegar para Coleta
                               </a>
                             </div>
 
                             {/* Seção de Entrega */}
-                            <div className="bg-lime-500/5 p-4 rounded-2xl border border-lime-500/10">
+                            <div className={`p-4 rounded-2xl border ${highContrast ? 'bg-white border-gray-200' : 'bg-lime-500/5 border-lime-500/10'}`}>
                               <div className="flex items-center gap-2 mb-2">
-                                <div className="w-6 h-6 bg-lime-500/20 rounded-full flex items-center justify-center text-lime-500">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${highContrast ? 'bg-lime-600 text-white' : 'bg-lime-500/20 text-lime-500'}`}>
                                   <MapPin size={12} />
                                 </div>
-                                <span className="text-[10px] font-black text-lime-500 uppercase tracking-widest">Ponto de Entrega</span>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${highContrast ? 'text-gray-800' : 'text-lime-500'}`}>Ponto de Entrega</span>
                               </div>
-                              <div className="flex flex-col gap-2 mb-1">
-                                <p className="text-white font-black text-xs uppercase tracking-tight line-clamp-2">{formatClientName(task)}</p>
+                              <div className="flex flex-col gap-2 mb-3">
+                                <p className={`font-black uppercase tracking-tight line-clamp-2 ${highContrast ? 'text-black text-lg' : 'text-white text-xs'}`}>{formatClientName(task)}</p>
                                 {task.telefone_cliente && (
                                   <div className="flex gap-2 w-full">
                                     <a
@@ -371,40 +374,40 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                                       onClick={(e) => e.stopPropagation()}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="flex-1 flex items-center justify-center gap-1.5 bg-lime-600 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-600/20"
+                                      className="flex-1 flex items-center justify-center gap-1.5 bg-lime-600 text-white px-2.5 py-2.5 rounded-lg text-[10px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-600/20"
                                     >
-                                      <MessageCircle size={12} fill="currentColor" /> WhatsApp
+                                      <MessageCircle size={14} fill="currentColor" /> WhatsApp
                                     </a>
                                     <a
                                       href={`tel:${task.telefone_cliente.replace(/\D/g, '')}`}
                                       onClick={(e) => e.stopPropagation()}
-                                      className="flex-1 flex items-center justify-center gap-1.5 bg-lime-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-500/20"
+                                      className="flex-1 flex items-center justify-center gap-1.5 bg-lime-500 text-white px-2.5 py-2.5 rounded-lg text-[10px] font-black uppercase hover:scale-105 active:scale-95 transition-all shadow-lg shadow-lime-500/20"
                                     >
-                                      <Phone size={10} fill="currentColor" /> Ligar
+                                      <Phone size={14} fill="currentColor" /> Ligar
                                     </a>
                                   </div>
                                 )}
                               </div>
-                              <p className="text-[10px] text-gray-400 font-medium leading-relaxed mb-3">
+                              <p className={`font-medium leading-tight mb-4 ${highContrast ? 'text-black text-2xl font-bold' : 'text-[11px] text-gray-400'}`}>
                                 {formatAddress(task)}
                               </p>
                               <a
                                 href={getMapsUrl(formatAddress(task))}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-2 w-full h-9 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase text-gray-300 transition-colors"
+                                className={`flex items-center justify-center gap-2 w-full h-11 rounded-xl text-[10px] font-black uppercase transition-colors ${highContrast ? 'bg-black text-white hover:bg-gray-800' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                               >
-                                <Navigation size={12} /> Navegar para Entrega
+                                <Navigation size={14} /> Navegar para Entrega
                               </a>
                             </div>
 
                             {/* Observações */}
                             {task.observacao && (
-                              <div className="bg-zinc-900 p-3 rounded-2xl border border-white/5">
-                                <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                              <div className={`p-3 rounded-2xl border ${highContrast ? 'bg-yellow-100 border-yellow-200' : 'bg-zinc-900 border-white/5'}`}>
+                                <p className={`text-[8px] font-black uppercase tracking-widest mb-1 flex items-center gap-1 ${highContrast ? 'text-gray-800' : 'text-gray-600'}`}>
                                   <AlertTriangle size={10} className="text-orange-primary" /> Observação Importante
                                 </p>
-                                <p className="text-[10px] text-orange-primary/90 font-bold italic leading-relaxed">
+                                <p className={`font-bold italic leading-relaxed ${highContrast ? 'text-black text-sm' : 'text-[10px] text-orange-primary/90'}`}>
                                   {formatObservation(task.observacao)}
                                 </p>
                               </div>
@@ -515,16 +518,17 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       )}
 
       {modalType === 'success' && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md overflow-y-auto overflow-x-hidden" onClick={() => setModalType(null)}>
-          <div className="glass-card w-full max-w-sm p-8 rounded-[2.5rem] border-white/10 my-auto shadow-2xl text-center" onClick={e => e.stopPropagation()}>
-            <div className="w-16 h-16 bg-orange-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-orange-primary">
-              <CheckCircle2 size={40} />
-            </div>
-            <h2 className="text-xl font-black mb-2 uppercase tracking-tighter">Concluída!</h2>
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-6">Valor adicionado ao seu saldo.</p>
-            <button onClick={() => setModalType(null)} className="w-full h-14 bg-orange-primary text-white font-black rounded-2xl text-xs uppercase shadow-lg shadow-orange-primary/20">Continuar</button>
-          </div>
-        </div>
+        <Modal
+          isOpen={true}
+          onClose={() => setModalType(null)}
+          type="success"
+          title="Entrega Concluída!"
+          message="Parabéns! A entrega foi registrada com sucesso. O valor já foi adicionado ao seu saldo."
+          primaryAction={{
+            label: 'Continuar',
+            onClick: () => setModalType(null)
+          }}
+        />
       )}
 
       {selectedDelivery && (
@@ -548,46 +552,46 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
 
             <div className="space-y-6">
               {/* Seção Coleta */}
-              <div className="glass-card p-6 rounded-3xl border-orange-primary/10 bg-orange-primary/5">
+              <div className={`p-6 rounded-3xl border ${highContrast ? 'bg-white border-gray-200' : 'bg-orange-primary/5 border-orange-primary/10'}`}>
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-orange-primary/20 rounded-full flex items-center justify-center text-orange-primary">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${highContrast ? 'bg-orange-500 text-white' : 'bg-orange-primary/20 text-orange-primary'}`}>
                     <PackageCheck size={16} />
                   </div>
-                  <h3 className="text-[10px] font-black text-orange-primary uppercase tracking-[0.2em]">Ponto de Coleta (Loja)</h3>
+                  <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${highContrast ? 'text-gray-800' : 'text-orange-primary'}`}>Ponto de Coleta (Loja)</h3>
                 </div>
                 <div className="space-y-3 mb-6">
                   <div>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Estabelecimento</p>
-                    <p className="text-sm text-white font-black uppercase tracking-tight">{selectedDelivery.estabelecimentos?.nome || 'N/A'}</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${highContrast ? 'text-gray-600' : 'text-gray-600'}`}>Estabelecimento</p>
+                    <p className={`text-sm font-black uppercase tracking-tight ${highContrast ? 'text-black' : 'text-white'}`}>{selectedDelivery.estabelecimentos?.nome || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Endereço de Retirada</p>
-                    <p className="text-xs text-gray-300 font-medium leading-relaxed">{formatAddress({ ...selectedDelivery, endereco_cliente: selectedDelivery.estabelecimentos?.endereco })}</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${highContrast ? 'text-gray-600' : 'text-gray-600'}`}>Endereço de Retirada</p>
+                    <p className={`text-xs font-medium leading-relaxed ${highContrast ? 'text-black text-lg' : 'text-gray-300'}`}>{formatAddress({ ...selectedDelivery, endereco_cliente: selectedDelivery.estabelecimentos?.endereco })}</p>
                   </div>
                 </div>
                 <a
                   href={getMapsUrl(formatAddress({ ...selectedDelivery, endereco_cliente: selectedDelivery.estabelecimentos?.endereco }))}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-3 w-full h-12 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase text-white transition-all"
+                  className={`flex items-center justify-center gap-3 w-full h-12 rounded-2xl text-[10px] font-black uppercase transition-all ${highContrast ? 'bg-black text-white' : 'bg-white/5 hover:bg-white/10 text-white'}`}
                 >
                   <MapPin size={14} /> Abrir GPS para Coleta
                 </a>
               </div>
 
               {/* Seção Entrega */}
-              <div className="glass-card p-6 rounded-3xl border-lime-500/10 bg-lime-500/5">
+              <div className={`p-6 rounded-3xl border ${highContrast ? 'bg-white border-gray-200' : 'bg-lime-500/5 border-lime-500/10'}`}>
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-lime-500/20 rounded-full flex items-center justify-center text-lime-500">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${highContrast ? 'bg-lime-600 text-white' : 'bg-lime-500/20 text-lime-500'}`}>
                     <MapPin size={16} />
                   </div>
-                  <h3 className="text-[10px] font-black text-lime-500 uppercase tracking-[0.2em]">Ponto de Entrega (Cliente)</h3>
+                  <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${highContrast ? 'text-gray-800' : 'text-lime-500'}`}>Ponto de Entrega (Cliente)</h3>
                 </div>
                 <div className="space-y-4 mb-6">
                   <div className="flex flex-col gap-3">
                     <div className="flex-1">
-                      <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Cliente</p>
-                      <p className="text-sm text-white font-black uppercase tracking-tight break-words">{formatClientName(selectedDelivery)}</p>
+                      <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${highContrast ? 'text-gray-600' : 'text-gray-600'}`}>Cliente</p>
+                      <p className={`text-sm font-black uppercase tracking-tight break-words ${highContrast ? 'text-black' : 'text-white'}`}>{formatClientName(selectedDelivery)}</p>
                     </div>
                     {selectedDelivery.telefone_cliente && (
                       <div className="flex gap-2 w-full mt-1">
@@ -609,13 +613,13 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                     )}
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-0.5">Endereço do Destino</p>
-                    <p className="text-xs text-gray-300 font-medium leading-relaxed">{formatAddress(selectedDelivery)}</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${highContrast ? 'text-gray-600' : 'text-gray-600'}`}>Endereço do Destino</p>
+                    <p className={`font-medium leading-relaxed ${highContrast ? 'text-black text-2xl font-bold' : 'text-xs text-gray-300'}`}>{formatAddress(selectedDelivery)}</p>
                   </div>
                   {selectedDelivery.observacao && (
-                    <div className="bg-black/20 p-3 rounded-xl border border-white/5">
-                      <p className="text-[9px] font-black text-orange-primary uppercase tracking-widest mb-1">📝 Observações</p>
-                      <p className="text-[11px] text-gray-200 font-medium italic">
+                    <div className={`p-3 rounded-xl border ${highContrast ? 'bg-yellow-100 border-yellow-200' : 'bg-black/20 border-white/5'}`}>
+                      <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${highContrast ? 'text-gray-800' : 'text-orange-primary'}`}>📝 Observações</p>
+                      <p className={`text-[11px] font-medium italic ${highContrast ? 'text-black' : 'text-gray-200'}`}>
                         {formatObservation(selectedDelivery.observacao)}
                       </p>
                     </div>
@@ -625,7 +629,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                   href={getMapsUrl(formatAddress(selectedDelivery))}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-3 w-full h-12 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase text-white transition-all"
+                  className={`flex items-center justify-center gap-3 w-full h-12 rounded-2xl text-[10px] font-black uppercase transition-all ${highContrast ? 'bg-black text-white' : 'bg-white/5 hover:bg-white/10 text-white'}`}
                 >
                   <Navigation size={14} /> Abrir GPS para Entrega
                 </a>
@@ -656,21 +660,6 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
             </div>
           </div>
         </div>
-      )}
-
-
-      {modalType === 'success' && (
-        <Modal
-          isOpen={true}
-          onClose={() => setModalType(null)}
-          type="success"
-          title="Entrega Concluída!"
-          message="Parabéns! A entrega foi registrada com sucesso. O valor já foi adicionado ao seu saldo."
-          primaryAction={{
-            label: 'Continuar',
-            onClick: () => setModalType(null)
-          }}
-        />
       )}
     </div>
   );

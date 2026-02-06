@@ -478,7 +478,14 @@ const TransactionRow = ({ entidade, valor, tipo, data, metodo, obs, isAdmin }: a
   const isVirtual = tipo === 'ganho_entrega';
 
   // Limpar observação para não mostrar IDs longos (UUID)
-  const cleanObs = obs?.includes('ID:') ? obs.split('(ID:')[0].trim() : obs;
+  let cleanObs = obs?.includes('ID:') ? obs.split('(ID:')[0].trim() : obs;
+
+  // Tratamento para "null" ou vazio
+  const isNullObs = !cleanObs || cleanObs === 'null' || cleanObs === 'undefined' || cleanObs.trim() === '';
+
+  if (isNullObs) {
+    cleanObs = 'Sem observações';
+  }
 
   return (
     <div className={`glass-card p-4 rounded-3xl flex items-baseline justify-between border-white/[0.03] ${isVirtual ? 'bg-white/[0.01] opacity-60' : 'bg-white/[0.01]'}`}>
@@ -489,7 +496,9 @@ const TransactionRow = ({ entidade, valor, tipo, data, metodo, obs, isAdmin }: a
           <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest leading-none mt-1">
             {new Date(data).toLocaleDateString('pt-BR')} • {isVirtual ? 'Saldo App' : metodo}
           </p>
-          {cleanObs && <p className="text-[9px] text-gray-500 italic mt-2 border-l border-white/5 pl-2">"{cleanObs}"</p>}
+          <p className={`text-[9px] italic mt-2 border-l border-white/5 pl-2 ${isNullObs ? 'text-orange-primary font-bold not-italic' : 'text-gray-500'}`}>
+            "{cleanObs}"
+          </p>
         </div>
       </div>
       <div className="text-right">
