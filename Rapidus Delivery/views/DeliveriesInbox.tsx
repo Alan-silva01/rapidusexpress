@@ -143,12 +143,19 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
     try {
       const effectiveDriverId = driver?.id || profile?.id || null;
 
+      // Lógica de comissão refinada:
+      // 1. Se driver tem porcentagem definida (mesmo que 0), usa ela. (Usa ?? em vez de ||)
+      // 2. Se não tem porcentagem, mas tem valor fixo > 0, assume 0% de comissão.
+      // 3. Se não tem nada, assume padrão 20%.
+      const commissionPct = driver?.porcentagem_lucro_admin ?? ((driver?.valor_f_ixo_admin && driver?.valor_f_ixo_admin > 0) ? 0 : 20);
+      const commissionFixed = driver?.valor_f_ixo_admin || 0;
+
       if ((delivery as any).isFromDB) {
         const { error } = await supabase.rpc('atribuir_entrega_existente', {
           p_entrega_id: (delivery as any).id,
           p_entregador_id: effectiveDriverId,
-          p_porcentagem_admin: driver?.porcentagem_lucro_admin || 20,
-          p_valor_fixo_admin: driver?.valor_fixo_admin || 0
+          p_porcentagem_admin: commissionPct,
+          p_valor_fixo_admin: commissionFixed
         });
         if (error) throw error;
       } else {
@@ -163,8 +170,8 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
           p_cliente_numero: store.numero_whatsapp,
           p_json_index: jsonIndex,
           p_entregador_id: effectiveDriverId,
-          p_porcentagem_admin: driver?.porcentagem_lucro_admin || 20,
-          p_valor_fixo_admin: driver?.valor_fixo_admin || 0
+          p_porcentagem_admin: commissionPct,
+          p_valor_fixo_admin: commissionFixed
         });
         if (error) throw error;
       }
