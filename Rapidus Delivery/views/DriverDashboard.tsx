@@ -344,7 +344,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                                 <span className={`text-[10px] font-black uppercase tracking-widest ${highContrast ? 'text-gray-800' : 'text-orange-primary'}`}>Ponto de Coleta</span>
                               </div>
                               <p className={`font-black uppercase tracking-tight mb-1 ${highContrast ? 'text-black text-lg' : 'text-white text-xs'}`}>{task.estabelecimentos?.nome}</p>
-                              <p className={`font-medium leading-tight mb-3 ${highContrast ? 'text-black text-xl font-bold' : 'text-[10px] text-gray-400'}`}>
+                              <p className={`font-bold leading-tight mb-3 ${highContrast ? 'text-black text-xl' : 'text-white text-lg'}`}>
                                 {formatAddress({ ...task, endereco_cliente: task.estabelecimentos?.endereco })}
                               </p>
                               <a
@@ -388,7 +388,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                                   </div>
                                 )}
                               </div>
-                              <p className={`font-medium leading-tight mb-4 ${highContrast ? 'text-black text-2xl font-bold' : 'text-[11px] text-gray-400'}`}>
+                              <p className={`font-bold leading-tight mb-4 ${highContrast ? 'text-black text-2xl' : 'text-white text-xl'}`}>
                                 {formatAddress(task)}
                               </p>
                               <a
@@ -566,7 +566,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                   </div>
                   <div>
                     <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${highContrast ? 'text-gray-600' : 'text-gray-600'}`}>Endereço de Retirada</p>
-                    <p className={`text-xs font-medium leading-relaxed ${highContrast ? 'text-black text-lg' : 'text-gray-300'}`}>{formatAddress({ ...selectedDelivery, endereco_cliente: selectedDelivery.estabelecimentos?.endereco })}</p>
+                    <p className={`font-bold leading-relaxed ${highContrast ? 'text-black text-xl' : 'text-white text-lg'}`}>{formatAddress({ ...selectedDelivery, endereco_cliente: selectedDelivery.estabelecimentos?.endereco })}</p>
                   </div>
                 </div>
                 <a
@@ -614,7 +614,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                   </div>
                   <div>
                     <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${highContrast ? 'text-gray-600' : 'text-gray-600'}`}>Endereço do Destino</p>
-                    <p className={`font-medium leading-relaxed ${highContrast ? 'text-black text-2xl font-bold' : 'text-xs text-gray-300'}`}>{formatAddress(selectedDelivery)}</p>
+                    <p className={`font-bold leading-relaxed ${highContrast ? 'text-black text-2xl' : 'text-white text-xl'}`}>{formatAddress(selectedDelivery)}</p>
                   </div>
                   {selectedDelivery.observacao && (
                     <div className={`p-3 rounded-xl border ${highContrast ? 'bg-yellow-100 border-yellow-200' : 'bg-black/20 border-white/5'}`}>
