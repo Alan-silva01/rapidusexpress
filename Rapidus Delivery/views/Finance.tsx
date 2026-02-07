@@ -185,7 +185,50 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
         ) : (
           <>
             <section className="space-y-4">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex flex-col gap-2 mb-2">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      const today = new Date().toISOString().split('T')[0];
+                      setStartDate(today);
+                      setEndDate(today);
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === endDate && startDate === new Date().toISOString().split('T')[0]
+                        ? 'bg-orange-primary text-white'
+                        : 'bg-white/5 text-gray-500 border border-white/5'
+                      }`}
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    onClick={() => {
+                      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                      setStartDate(yesterday);
+                      setEndDate(yesterday);
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === endDate && startDate === new Date(Date.now() - 86400000).toISOString().split('T')[0]
+                        ? 'bg-orange-primary text-white'
+                        : 'bg-white/5 text-gray-500 border border-white/5'
+                      }`}
+                  >
+                    Ontem
+                  </button>
+                  <button
+                    onClick={() => {
+                      const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+                      const today = new Date().toISOString().split('T')[0];
+                      setStartDate(firstDay);
+                      setEndDate(today);
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] &&
+                        endDate === new Date().toISOString().split('T')[0]
+                        ? 'bg-orange-primary text-white'
+                        : 'bg-white/5 text-gray-500 border border-white/5'
+                      }`}
+                  >
+                    Este Mês
+                  </button>
+                </div>
                 <div className="flex-1 bg-white/5 rounded-2xl p-2 flex items-center gap-2 border border-white/5">
                   <Calendar size={14} className="text-gray-600 ml-2" />
                   <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent text-[10px] font-black text-gray-300 outline-none w-full" />
