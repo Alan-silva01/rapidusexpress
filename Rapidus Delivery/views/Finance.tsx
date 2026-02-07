@@ -48,8 +48,15 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
     if (!profile) return;
     setLoading(true);
     try {
-      const { data: stores } = await supabase.from('v_resumo_estabelecimentos').select('*');
-      const { data: drivers } = await supabase.from('v_resumo_entregadores').select('*');
+      // Usar funções RPC parametrizadas que filtram por período
+      const { data: stores } = await supabase.rpc('fn_resumo_estabelecimentos_por_periodo', {
+        data_inicio: `${startDate}T00:00:00Z`,
+        data_fim: `${endDate}T23:59:59Z`
+      });
+      const { data: drivers } = await supabase.rpc('fn_resumo_entregadores_por_periodo', {
+        data_inicio: `${startDate}T00:00:00Z`,
+        data_fim: `${endDate}T23:59:59Z`
+      });
       const { data: profiles } = await supabase.from('perfis').select('id, nome');
       setAllProfiles(profiles || []);
 
@@ -81,23 +88,24 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
 
       setStats({ comissoes, proprio, recebido, pago });
 
-      // 3. Enriquecer os resumos com dados do período
-      const storesEnriched = (stores || []).map(s => {
+      // 3. Enriquecer os resumos com dados do período (agora já vem filtrado das funções SQL)
+      const storesEnriched = (stores || []).map((s: any) => {
         const periodReceived = txs?.filter(t => t.entidade_id === s.id && t.tipo === 'recebimento_estabelecimento')
           .reduce((acc, curr) => acc + Number(curr.valor || 0), 0) || 0;
         const periodDeliveries = globalStats?.filter(d => d.estabelecimento_id === s.id).length || 0;
         return { ...s, periodReceived, periodDeliveries };
       });
 
-      const driversEnriched = (drivers || []).map(d => {
+      const driversEnriched = (drivers || []).map((d: any) => {
         const periodPaid = txs?.filter(t => t.entidade_id === d.id && t.tipo === 'pagamento_entregador')
           .reduce((acc, curr) => acc + Number(curr.valor || 0), 0) || 0;
-        const periodDeliveries = globalStats?.filter(delivery => delivery.entregador_id === d.id).length || 0;
+        const periodDeliveries = globalStats?.filter((delivery: any) => delivery.entregador_id === d.id).length || 0;
         return { ...d, periodPaid, periodDeliveries };
       });
 
-      const globalReceivables = (stores || []).reduce((acc, s) => acc + Number(s.saldo_faltante || 0), 0);
-      const globalPayables = (drivers || []).reduce((acc, d) => acc + Number(d.saldo_a_pagar || 0), 0);
+      // Totais globais agora são os totais do período (já filtrados pelas funções SQL)
+      const globalReceivables = (stores || []).reduce((acc: number, s: any) => acc + Number(s.saldo_faltante || 0), 0);
+      const globalPayables = (drivers || []).reduce((acc: number, d: any) => acc + Number(d.saldo_a_pagar || 0), 0);
 
       setResumoStores(storesEnriched);
       setResumoDrivers(driversEnriched);
