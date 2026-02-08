@@ -131,6 +131,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
       return;
     }
 
+    if (saving) return;
+
     setSaving(true);
     try {
       const { error } = await supabase.from('transacoes_financeiras').insert({
@@ -141,10 +143,18 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
         observacao,
         data_transacao: new Date().toISOString()
       });
+
       if (error) throw error;
+
+      // Close modal immediately for feedback
       setShowModal(false);
+
+      // Reset form
       setValor('');
       setObservacao('');
+      setEntidadeId('');
+
+      // Refresh data in background
       await fetchFinanceData();
     } catch (err: any) {
       alert('Erro ao salvar transação: ' + err.message);
