@@ -37,14 +37,28 @@ const App: React.FC = () => {
       }
     }, 10000);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!isMounted) return;
       console.log('🔑 App: Session status:', session ? 'Found' : 'Not found');
-      setSession(session);
+
       if (session) {
-        fetchProfile(session.user.id);
-      }
-      else {
+        // Try to refresh the session to ensure token is valid
+        console.log('🔄 App: Attempting token refresh...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+        if (refreshError || !refreshData.session) {
+          console.warn('⚠️ App: Token refresh failed, forcing re-login');
+          await supabase.auth.signOut();
+          setSession(null);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+
+        console.log('✅ App: Token refreshed successfully');
+        setSession(refreshData.session);
+        fetchProfile(refreshData.session.user.id);
+      } else {
         console.log('⏹️ App: No session, stopping loading');
         setLoading(false);
       }
