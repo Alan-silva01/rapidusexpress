@@ -242,8 +242,8 @@ const DriverManagement: React.FC = () => {
       ) : (
         <div className="space-y-3">
           {drivers.map(driver => (
-            <div key={driver.id} className="glass-card p-4 rounded-2xl flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div key={driver.id} className="glass-card p-4 rounded-2xl flex items-center justify-between group/card relative overflow-hidden">
+              <div className="flex items-center gap-4 z-10">
                 <img src={driver.foto_url || `https://picsum.photos/seed/${driver.id}/100/100`} className="w-11 h-11 rounded-xl object-cover" alt="" />
                 <div>
                   <h4 className="text-xs font-black tracking-tight">{driver.nome}</h4>
@@ -253,10 +253,27 @@ const DriverManagement: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] font-black text-white">{driver.porcentagem_lucro_admin}% comissão</p>
-                <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Taxa Admin</p>
+              <div className="text-right z-10 flex flex-col items-end">
+                {driver.porcentagem_lucro_admin > 0 ? (
+                  <>
+                    <p className="text-[10px] font-black text-white">{driver.porcentagem_lucro_admin}% comissão</p>
+                    <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Taxa Admin</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[10px] font-black text-white">R$ {Number(driver.valor_fixo_admin || 0).toFixed(2)} fixo</p>
+                    <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Valor Fixo</p>
+                  </>
+                )}
               </div>
+
+              {/* Delete Button - Slide Action or Visible */}
+              <button
+                onClick={() => handleDeleteDriver(driver.id, driver.nome)}
+                className="absolute right-0 top-0 bottom-0 w-16 bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-500 transition-all translate-x-full group-hover/card:translate-x-0 cursor-pointer"
+              >
+                <Trash2 size={18} />
+              </button>
             </div>
           ))}
         </div>
