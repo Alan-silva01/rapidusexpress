@@ -194,8 +194,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                       setEndDate(today);
                     }}
                     className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === endDate && startDate === new Date().toISOString().split('T')[0]
-                        ? 'bg-orange-primary text-white'
-                        : 'bg-white/5 text-gray-500 border border-white/5'
+                      ? 'bg-orange-primary text-white'
+                      : 'bg-white/5 text-gray-500 border border-white/5'
                       }`}
                   >
                     Hoje
@@ -207,8 +207,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                       setEndDate(yesterday);
                     }}
                     className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === endDate && startDate === new Date(Date.now() - 86400000).toISOString().split('T')[0]
-                        ? 'bg-orange-primary text-white'
-                        : 'bg-white/5 text-gray-500 border border-white/5'
+                      ? 'bg-orange-primary text-white'
+                      : 'bg-white/5 text-gray-500 border border-white/5'
                       }`}
                   >
                     Ontem
@@ -221,9 +221,9 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                       setEndDate(today);
                     }}
                     className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] &&
-                        endDate === new Date().toISOString().split('T')[0]
-                        ? 'bg-orange-primary text-white'
-                        : 'bg-white/5 text-gray-500 border border-white/5'
+                      endDate === new Date().toISOString().split('T')[0]
+                      ? 'bg-orange-primary text-white'
+                      : 'bg-white/5 text-gray-500 border border-white/5'
                       }`}
                   >
                     Este Mês
@@ -370,7 +370,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                           <FinanceRow
                             key={driver.id}
                             title={driver.nome}
-                            subtitle="Dívida acumulada"
+                            subtitle={`${driver.periodDeliveries || 0} ${driver.periodDeliveries === 1 ? 'entrega' : 'entregas'} no período`}
                             value={driver.saldo_a_pagar || 0}
                             orange={(driver.saldo_a_pagar || 0) > 0}
                             periodLabel="Pago"
