@@ -53,6 +53,26 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
       const { data: driverData } = await supabase.from('perfis').select('*').eq('funcao', 'entregador');
       const { data: refusedData } = await supabase.from('entregas').select('*').eq('status', 'aguardando');
 
+      // Fetch active deliveries count per driver
+      const { data: activeDeliveries } = await supabase
+        .from('entregas')
+        .select('entregador_id')
+        .in('status', ['atribuida', 'aceita', 'em_rota', 'coletada']);
+
+      // Count deliveries per driver
+      const deliveryCountByDriver: Record<string, number> = {};
+      (activeDeliveries || []).forEach((d: any) => {
+        if (d.entregador_id) {
+          deliveryCountByDriver[d.entregador_id] = (deliveryCountByDriver[d.entregador_id] || 0) + 1;
+        }
+      });
+
+      // Add count to each driver
+      const driversWithCount = (driverData || []).map(driver => ({
+        ...driver,
+        activeDeliveriesCount: deliveryCountByDriver[driver.id] || 0
+      }));
+
       // Associar as entregas do JSON dos clientes
       const storesWithDeliveries = (estData || []).map(store => {
         const jsonDeliveries = clientData?.find(c => c.numero === store.numero_whatsapp)?.entregas || [];
@@ -123,7 +143,7 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
       });
 
       setStores(storesWithDeliveries);
-      setDrivers(driverData || []);
+      setDrivers(driversWithCount);
     } catch (err) {
       console.error(err);
     } finally {
@@ -454,7 +474,14 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
                               <img src={driver.foto_url || `https://picsum.photos/seed/${driver.id}/100/100`} className="w-9 h-9 rounded-lg object-cover" alt="" />
                               <div>
                                 <p className="text-[11px] font-black text-gray-300 group-hover:text-white">{driver.nome}</p>
-                                <p className="text-[8px] text-lime-500 font-bold uppercase tracking-widest">{driver.moto_modelo}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-[8px] text-lime-500 font-bold uppercase tracking-widest">{driver.moto_modelo}</p>
+                                  {driver.activeDeliveriesCount > 0 && (
+                                    <span className="text-[8px] font-black text-orange-primary bg-orange-primary/10 px-1.5 py-0.5 rounded-md">
+                                      {driver.activeDeliveriesCount} {driver.activeDeliveriesCount === 1 ? 'entrega' : 'entregas'}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <ChevronRight size={16} className="text-gray-800 group-hover:text-orange-primary" />
