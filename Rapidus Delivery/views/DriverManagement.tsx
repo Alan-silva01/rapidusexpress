@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { Users, Plus, X, Bike, Search, Loader2, Check, Phone, Mail, User, CreditCard, ChevronLeft, Lock, Camera } from 'lucide-react';
+import { Users, Plus, X, Bike, Search, Loader2, Check, Phone, Mail, User, CreditCard, ChevronLeft, Lock, Camera, Trash2 } from 'lucide-react';
 import { cropToSquare } from '../utils/imageUtils';
 
 const DriverManagement: React.FC = () => {
@@ -115,6 +115,27 @@ const DriverManagement: React.FC = () => {
       alert('Erro ao salvar entregador');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteDriver = async (id: string, name: string) => {
+    if (!confirm(`Tem certeza que deseja remover ${name}? Todo o histórico será mantido, mas o acesso será revogado.`)) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: id }
+      });
+
+      if (error) throw error;
+
+      alert('Entregador removido com sucesso!');
+      fetchDrivers();
+    } catch (err: any) {
+      console.error('Erro ao deletar:', err);
+      alert('Erro ao excluir entregador: ' + (err.message || 'Erro desconhecido'));
+    } finally {
+      setLoading(false);
     }
   };
 
