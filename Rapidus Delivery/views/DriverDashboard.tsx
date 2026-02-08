@@ -282,7 +282,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                         <p className="text-gray-300 font-medium leading-tight line-clamp-1">{formatAddress(delivery)}</p>
                       </div>
                     </div>
-                    {delivery.observacao && (
+                    {delivery.observacao && delivery.observacao !== 'null' && (
                       <div className="bg-black/20 p-2 rounded-xl border border-white/5">
                         <p className="text-[9px] text-orange-primary/80 font-bold italic line-clamp-2">
                           {formatObservation(delivery.observacao)}
@@ -402,7 +402,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                             </div>
 
                             {/* Observações */}
-                            {task.observacao && (
+                            {task.observacao && task.observacao !== 'null' && (
                               <div className={`p-3 rounded-2xl border ${highContrast ? 'bg-yellow-100 border-yellow-200' : 'bg-zinc-900 border-white/5'}`}>
                                 <p className={`text-[8px] font-black uppercase tracking-widest mb-1 flex items-center gap-1 ${highContrast ? 'text-gray-800' : 'text-gray-600'}`}>
                                   <AlertTriangle size={10} className="text-orange-primary" /> Observação Importante
@@ -501,7 +501,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                           <p className="text-gray-700 text-[7px] mb-0.5">Endereço de Entrega</p>
                           <p className="text-gray-300 leading-relaxed">{formatAddress(delivery)}</p>
                         </div>
-                        {delivery.observacao && (
+                        {delivery.observacao && delivery.observacao !== 'null' && (
                           <div>
                             <p className="text-gray-700 text-[7px] mb-0.5">Observações</p>
                             <p className="text-orange-primary/70 italic normal-case">{formatObservation(delivery.observacao)}</p>
@@ -616,7 +616,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
                     <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${highContrast ? 'text-gray-600' : 'text-gray-600'}`}>Endereço do Destino</p>
                     <p className={`font-bold leading-relaxed ${highContrast ? 'text-black text-2xl' : 'text-white text-xl'}`}>{formatAddress(selectedDelivery)}</p>
                   </div>
-                  {selectedDelivery.observacao && (
+                  {selectedDelivery.observacao && selectedDelivery.observacao !== 'null' && (
                     <div className={`p-3 rounded-xl border ${highContrast ? 'bg-yellow-100 border-yellow-200' : 'bg-black/20 border-white/5'}`}>
                       <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${highContrast ? 'text-gray-800' : 'text-orange-primary'}`}>📝 Observações</p>
                       <p className={`text-[11px] font-medium italic ${highContrast ? 'text-black' : 'text-gray-200'}`}>

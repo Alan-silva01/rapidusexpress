@@ -398,7 +398,7 @@ const ActivityItem = ({ activity, isExpanded, onToggle, color }: any) => {
                 <p className="text-lime-500 text-[10px]">R$ {parseFloat(activity.lucro_admin || '0').toFixed(2)}</p>
               </div>
             </div>
-            {activity.observacao && (
+            {activity.observacao && activity.observacao !== 'null' && (
               <div>
                 <p className="text-gray-700 text-[7px] mb-1">Observações</p>
                 <p className="text-orange-primary/70 italic normal-case text-[10px]">{activity.observacao.replace('Extraída do WhatsApp: ', '')}</p>

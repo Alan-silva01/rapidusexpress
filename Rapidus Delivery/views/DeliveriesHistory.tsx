@@ -148,7 +148,7 @@ const DeliveriesHistory: React.FC<DeliveriesHistoryProps> = ({ profileId, onBack
                                                 <p className="text-gray-700 text-[8px] mb-1">📍 Endereço de Entrega</p>
                                                 <p className="text-gray-300 leading-relaxed normal-case font-medium">{delivery.endereco_cliente || 'Não informado'}</p>
                                             </div>
-                                            {delivery.observacao && (
+                                            {delivery.observacao && delivery.observacao !== 'null' && (
                                                 <div>
                                                     <p className="text-gray-700 text-[8px] mb-1">📝 Observações</p>
                                                     <p className="text-orange-primary/70 italic normal-case font-medium">{delivery.observacao.replace('Extraída do WhatsApp: ', '')}</p>
