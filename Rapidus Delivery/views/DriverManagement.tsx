@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { Users, Plus, X, Bike, Search, Loader2, Check, Phone, Mail, User, CreditCard, ChevronLeft, Lock, Camera, Trash2 } from 'lucide-react';
+import { Users, Plus, X, Bike, Search, Loader2, Check, Phone, Mail, User, CreditCard, ChevronLeft, Lock, Camera, Trash2, AlertTriangle } from 'lucide-react';
 import { cropToSquare } from '../utils/imageUtils';
+import Modal from '../components/Modal';
 
 const DriverManagement: React.FC = () => {
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -22,6 +23,8 @@ const DriverManagement: React.FC = () => {
     valor_fixo_admin: 0,
     foto_url: ''
   });
+
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string; name: string } | null>(null);
 
   const [uploading, setUploading] = useState(false);
 
@@ -118,10 +121,12 @@ const DriverManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteDriver = async (id: string, name: string) => {
-    if (!confirm(`Tem certeza que deseja remover ${name}? Todo o histórico será mantido, mas o acesso será revogado.`)) return;
+  const handleDeleteDriver = async () => {
+    if (!deleteModal) return;
+    const { id } = deleteModal;
 
     setLoading(true);
+    setDeleteModal(null);
     try {
       const { error } = await supabase.functions.invoke('delete-user', {
         body: { user_id: id }
@@ -243,40 +248,62 @@ const DriverManagement: React.FC = () => {
         <div className="space-y-3">
           {drivers.map(driver => (
             <div key={driver.id} className="glass-card p-4 rounded-2xl flex items-center justify-between group/card relative overflow-hidden">
-              <div className="flex items-center gap-4 z-10">
+              <div className="flex items-center gap-4">
                 <img src={driver.foto_url || `https://picsum.photos/seed/${driver.id}/100/100`} className="w-11 h-11 rounded-xl object-cover" alt="" />
-                <div>
-                  <h4 className="text-xs font-black tracking-tight">{driver.nome}</h4>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-black tracking-tight truncate">{driver.nome}</h4>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${driver.disponivel ? 'bg-lime-500' : 'bg-gray-700'}`}></span>
                     <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{driver.moto_modelo || 'A pé'}</p>
                   </div>
                 </div>
               </div>
-              <div className="text-right z-10 flex flex-col items-end">
-                {driver.porcentagem_lucro_admin > 0 ? (
-                  <>
-                    <p className="text-[10px] font-black text-white">{driver.porcentagem_lucro_admin}% comissão</p>
-                    <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Taxa Admin</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-[10px] font-black text-white">R$ {Number(driver.valor_fixo_admin || 0).toFixed(2)} fixo</p>
-                    <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Valor Fixo</p>
-                  </>
-                )}
-              </div>
 
-              {/* Delete Button - Slide Action or Visible */}
-              <button
-                onClick={() => handleDeleteDriver(driver.id, driver.nome)}
-                className="absolute right-0 top-0 bottom-0 w-16 bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-500 transition-all translate-x-full group-hover/card:translate-x-0 cursor-pointer"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  {driver.porcentagem_lucro_admin > 0 ? (
+                    <>
+                      <p className="text-[10px] font-black text-white">{driver.porcentagem_lucro_admin}% comissão</p>
+                      <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">Taxa Admin</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[10px] font-black text-white">R$ {Number(driver.valor_fixo_admin || 0).toFixed(2)} fixo</p>
+                      <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest leading-none">Valor Fixo</p>
+                    </>
+                  )}
+                </div>
+
+                <div className="w-px h-6 bg-white/5" />
+
+                <button
+                  onClick={() => setDeleteModal({ isOpen: true, id: driver.id, name: driver.nome })}
+                  className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center active:scale-95 transition-all hover:bg-red-500/20"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
+      )}
+
+      {deleteModal?.isOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => setDeleteModal(null)}
+          type="warning"
+          title="Remover Entregador"
+          message={`Tem certeza que deseja remover ${deleteModal.name}? O acesso ao sistema será revogado imediatamente.`}
+          primaryAction={{
+            label: 'Sim, Confirmar',
+            onClick: handleDeleteDriver
+          }}
+          secondaryAction={{
+            label: 'Cancelar',
+            onClick: () => setDeleteModal(null)
+          }}
+        />
       )}
     </div>
   );
