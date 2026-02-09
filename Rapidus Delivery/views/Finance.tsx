@@ -9,6 +9,13 @@ interface FinanceProps {
 }
 
 const Finance: React.FC<FinanceProps> = ({ profile }) => {
+  const getLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [resumoStores, setResumoStores] = useState<any[]>([]);
   const [resumoDrivers, setResumoDrivers] = useState<any[]>([]);
   const [allProfiles, setAllProfiles] = useState<any[]>([]);
@@ -36,8 +43,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
   const [metodo, setMetodo] = useState('PIX');
   const [observacao, setObservacao] = useState('');
 
-  const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
+  const [endDate, setEndDate] = useState(getLocalDateString());
   const [displayCount, setDisplayCount] = useState(30);
 
   useEffect(() => {
@@ -48,14 +55,18 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
     if (!profile) return;
     setLoading(true);
     try {
+      // Calcular as fronteiras UTC correspondentes ao dia local
+      const startOfDay = new Date(`${startDate}T00:00:00`).toISOString();
+      const endOfDay = new Date(`${endDate}T23:59:59`).toISOString();
+
       // Usar funções RPC parametrizadas que filtram por período
       const { data: stores } = await supabase.rpc('fn_resumo_estabelecimentos_por_periodo', {
-        data_inicio: `${startDate}T00:00:00Z`,
-        data_fim: `${endDate}T23:59:59Z`
+        data_inicio: startOfDay,
+        data_fim: endOfDay
       });
       const { data: drivers } = await supabase.rpc('fn_resumo_entregadores_por_periodo', {
-        data_inicio: `${startDate}T00:00:00Z`,
-        data_fim: `${endDate}T23:59:59Z`
+        data_inicio: startOfDay,
+        data_fim: endOfDay
       });
       const { data: profiles } = await supabase.from('perfis').select('id, nome');
       setAllProfiles(profiles || []);
@@ -65,8 +76,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
         .from('entregas')
         .select('valor_total, valor_entregador, lucro_admin, entregador_id, estabelecimento_id')
         .eq('status', 'finalizada')
-        .gte('criado_at', `${startDate}T00:00:00Z`)
-        .lte('criado_at', `${endDate}T23:59:59Z`);
+        .gte('criado_at', startOfDay)
+        .lte('criado_at', endOfDay);
 
       const myDeliveries = globalStats?.filter(d => d.entregador_id === profile.id) || [];
       const proprio = myDeliveries.reduce((acc, curr) => acc + Number(profile.funcao === 'admin' ? curr.valor_total : curr.valor_entregador), 0) || 0;
@@ -76,8 +87,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
       const { data: txs } = await supabase
         .from('transacoes_financeiras')
         .select('*')
-        .gte('data_transacao', `${startDate}T00:00:00Z`)
-        .lte('data_transacao', `${endDate}T23:59:59Z`)
+        .gte('data_transacao', startOfDay)
+        .lte('data_transacao', endOfDay)
         .order('data_transacao', { ascending: false });
 
       const recebido = txs?.filter(t => t.tipo === 'recebimento_estabelecimento')
@@ -199,11 +210,11 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      const today = new Date().toISOString().split('T')[0];
+                      const today = getLocalDateString();
                       setStartDate(today);
                       setEndDate(today);
                     }}
-                    className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === endDate && startDate === new Date().toISOString().split('T')[0]
+                    className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === endDate && startDate === getLocalDateString()
                       ? 'bg-orange-primary text-white'
                       : 'bg-white/5 text-gray-500 border border-white/5'
                       }`}
@@ -212,11 +223,13 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                   </button>
                   <button
                     onClick={() => {
-                      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                      const d = new Date();
+                      d.setDate(d.getDate() - 1);
+                      const yesterday = getLocalDateString(d);
                       setStartDate(yesterday);
                       setEndDate(yesterday);
                     }}
-                    className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === endDate && startDate === new Date(Date.now() - 86400000).toISOString().split('T')[0]
+                    className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === endDate && startDate === (getLocalDateString((() => { const d = new Date(); d.setDate(d.getDate() - 1); return d; })()))
                       ? 'bg-orange-primary text-white'
                       : 'bg-white/5 text-gray-500 border border-white/5'
                       }`}
@@ -225,13 +238,13 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                   </button>
                   <button
                     onClick={() => {
-                      const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-                      const today = new Date().toISOString().split('T')[0];
+                      const firstDay = getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+                      const today = getLocalDateString();
                       setStartDate(firstDay);
                       setEndDate(today);
                     }}
-                    className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] &&
-                      endDate === new Date().toISOString().split('T')[0]
+                    className={`flex-1 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${startDate === getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)) &&
+                      endDate === getLocalDateString()
                       ? 'bg-orange-primary text-white'
                       : 'bg-white/5 text-gray-500 border border-white/5'
                       }`}
