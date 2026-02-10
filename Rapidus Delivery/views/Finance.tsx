@@ -40,6 +40,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
   const [valor, setValor] = useState('');
   const [metodo, setMetodo] = useState('PIX');
   const [observacao, setObservacao] = useState('');
+  const [dataTransacao, setDataTransacao] = useState(getLocalDateString());
 
   const [startDate, setStartDate] = useState(getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
   const [endDate, setEndDate] = useState(getLocalDateString());
@@ -150,7 +151,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
         valor: parseFloat(valor),
         metodo_pagamento: metodo,
         observacao,
-        data_transacao: new Date().toISOString()
+        data_transacao: getBrasiliaStartOfDay(dataTransacao)
       });
 
       if (error) throw error;
@@ -161,6 +162,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
       // Reset form
       setValor('');
       setObservacao('');
+      setDataTransacao(getLocalDateString());
       setEntidadeId('');
 
       // Refresh data in background
@@ -176,6 +178,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
     setEntidadeId(id);
     setTipo(initialTipo);
     setValor(initialValor > 0 ? initialValor.toFixed(2) : '');
+    setDataTransacao(getLocalDateString());
     setShowModal(true);
   };
 
@@ -482,6 +485,17 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                 <div>
                   <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Observação (Opcional)</label>
                   <input type="text" value={observacao} onChange={(e) => setObservacao(e.target.value)} className="w-full h-12 bg-white/5 border border-white/5 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-orange-primary/20" placeholder="Ex: Pagamento parcial da semana" />
+                </div>
+                <div>
+                  <label className="text-[9px] font-black uppercase text-gray-700 tracking-[0.2em] mb-1.5 block ml-1">Data de Referência</label>
+                  <div className="flex gap-2 mb-1">
+                    <button type="button" onClick={() => setDataTransacao(getLocalDateString())} className={`flex-1 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${dataTransacao === getLocalDateString() ? 'bg-orange-primary text-white' : 'bg-white/5 text-gray-500 border border-white/5'}`}>Hoje</button>
+                    <button type="button" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 1); setDataTransacao(getLocalDateString(d)); }} className={`flex-1 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${dataTransacao === getLocalDateString((() => { const d = new Date(); d.setDate(d.getDate() - 1); return d; })()) ? 'bg-orange-primary text-white' : 'bg-white/5 text-gray-500 border border-white/5'}`}>Ontem</button>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-4 h-12">
+                    <Calendar size={14} className="text-gray-600" />
+                    <input type="date" value={dataTransacao} onChange={(e) => setDataTransacao(e.target.value)} className="bg-transparent text-xs font-bold text-white outline-none w-full" />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
