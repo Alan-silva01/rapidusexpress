@@ -7,7 +7,8 @@ interface ModalProps {
     onClose: () => void;
     type?: 'success' | 'warning' | 'info' | 'driver' | 'admin';
     title: string;
-    message: string;
+    message?: string;
+    children?: React.ReactNode;
     primaryAction?: {
         label: string;
         onClick: () => void;
@@ -24,6 +25,7 @@ const Modal: React.FC<ModalProps> = ({
     type = 'info',
     title,
     message,
+    children,
     primaryAction,
     secondaryAction
 }) => {
@@ -73,10 +75,16 @@ const Modal: React.FC<ModalProps> = ({
                     {title}
                 </h2>
 
-                {/* Message */}
-                <p className="text-[11px] text-gray-400 text-center leading-relaxed mb-8">
-                    {message}
-                </p>
+                {/* Message / Content */}
+                {children ? (
+                    <div className="mb-8">
+                        {children}
+                    </div>
+                ) : message && (
+                    <p className="text-[11px] text-gray-400 text-center leading-relaxed mb-8">
+                        {message}
+                    </p>
+                )}
 
                 {/* Actions */}
                 <div className="space-y-3">

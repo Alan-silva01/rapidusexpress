@@ -24,7 +24,9 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
   const [loading, setLoading] = useState(true);
   const [assigningPath, setAssigningPath] = useState<{ storeIndex: number, deliveryIndex: number } | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'warning' | 'driver' | 'admin'; title: string; message: string; driverName?: string } | null>(null);
+  const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'warning' | 'info' | 'driver' | 'admin'; title: string; message?: string; driverName?: string } | null>(null);
+  const [editingAddress, setEditingAddress] = useState<{ store: any; dIdx: number; isDb: boolean; id: string | null; currentAddress: string } | null>(null);
+  const [tempAddress, setTempAddress] = useState('');
 
   useEffect(() => {
     fetchInboxData();
@@ -340,6 +342,13 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
         if (error) throw error;
       }
       await fetchInboxData(true);
+      setEditingAddress(null);
+      setModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Sucesso!',
+        message: 'O endereço de entrega foi atualizado com sucesso.'
+      });
     } catch (err: any) {
       alert('Erro ao atualizar endereço: ' + err.message);
     } finally {
@@ -472,8 +481,15 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
                               {profile?.funcao === 'admin' && (
                                 <button
                                   onClick={() => {
-                                    const novoEndereco = prompt('Novo endereço de entrega:', delivery.endereco_cliente.join(', '));
-                                    if (novoEndereco) handleUpdateAddress(store, dIdx, (delivery as any).isFromDB, (delivery as any).id, novoEndereco);
+                                    const addr = delivery.endereco_cliente.join(', ');
+                                    setTempAddress(addr);
+                                    setEditingAddress({
+                                      store,
+                                      dIdx,
+                                      isDb: (delivery as any).isFromDB,
+                                      id: (delivery as any).id,
+                                      currentAddress: addr
+                                    });
                                   }}
                                   className="p-1 hover:bg-white/10 rounded-full transition-colors"
                                   title="Editar endereço"
@@ -549,7 +565,7 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
         </div>
       )}
 
-      {/* Modal de confirmação */}
+      {/* Modal de confirmação / Mensagens */}
       {modal && (
         <Modal
           isOpen={modal.isOpen}
@@ -562,6 +578,41 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
             onClick: () => setModal(null)
           }}
         />
+      )}
+
+      {/* Modal de Edição de Endereço */}
+      {editingAddress && (
+        <Modal
+          isOpen={!!editingAddress}
+          onClose={() => setEditingAddress(null)}
+          type="info"
+          title="Editar Endereço"
+          primaryAction={{
+            label: 'Salvar Alteração',
+            onClick: () => handleUpdateAddress(
+              editingAddress.store,
+              editingAddress.dIdx,
+              editingAddress.isDb,
+              editingAddress.id,
+              tempAddress
+            )
+          }}
+          secondaryAction={{
+            label: 'Cancelar',
+            onClick: () => setEditingAddress(null)
+          }}
+        >
+          <div className="space-y-4">
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest px-1">Novo endereço completo</p>
+            <textarea
+              value={tempAddress}
+              onChange={(e) => setTempAddress(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xs font-medium text-white focus:outline-none focus:border-orange-primary/50 transition-all min-h-[100px] resize-none"
+              placeholder="Digite o novo endereço..."
+              autoFocus
+            />
+          </div>
+        </Modal>
       )}
     </div>
   );
