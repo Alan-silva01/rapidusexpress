@@ -4,6 +4,7 @@ import { supabase } from '../supabase';
 import { Perfil } from '../types';
 import { Power, Navigation, ChevronRight, Activity, CheckCircle2, XCircle, AlertTriangle, Loader2, PackageCheck, Bike, RefreshCw, History, Phone, MapPin, MessageCircle, Sun } from 'lucide-react';
 import Modal from '../components/Modal';
+import { getBrasiliaDateString, toBrasiliaDateString } from '../utils/dateUtils';
 
 interface DriverDashboardProps {
   profile: Perfil;
@@ -84,8 +85,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ profile, onViewChange
       setActiveDeliveries(data?.filter(d => ['aceita', 'coletada', 'em_rota'].includes(d.status)) || []);
 
       const finalizadas = data?.filter(d => d.status === 'finalizada') || [];
-      const hoje = new Date().toISOString().split('T')[0];
-      const hojeOnly = finalizadas.filter(d => d.criado_at.startsWith(hoje));
+      const hoje = getBrasiliaDateString();
+      const hojeOnly = finalizadas.filter(d => toBrasiliaDateString(d.criado_at) === hoje);
 
       setHistoryDeliveries(finalizadas.slice(0, 20));
       setTodayDeliveries(hojeOnly);

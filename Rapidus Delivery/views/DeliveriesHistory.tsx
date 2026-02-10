@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Search, Calendar, ChevronLeft, Loader2, Package, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { getBrasiliaStartOfDay, getBrasiliaEndOfDay } from '../utils/dateUtils';
 
 interface DeliveriesHistoryProps {
     profileId: string;
@@ -33,8 +34,8 @@ const DeliveriesHistory: React.FC<DeliveriesHistoryProps> = ({ profileId, onBack
                 .eq('status', 'finalizada')
                 .order('criado_at', { ascending: false });
 
-            if (dateStart) query = query.gte('criado_at', dateStart);
-            if (dateEnd) query = query.lte('criado_at', dateEnd + 'T23:59:59');
+            if (dateStart) query = query.gte('criado_at', getBrasiliaStartOfDay(dateStart));
+            if (dateEnd) query = query.lte('criado_at', getBrasiliaEndOfDay(dateEnd));
             if (searchTerm) {
                 query = query.or(`nome_cliente.ilike.%${searchTerm}%,observacao.ilike.%${searchTerm}%`);
             }

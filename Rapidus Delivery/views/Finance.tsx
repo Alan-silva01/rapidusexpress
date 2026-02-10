@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Plus, X, Loader2, ChevronRight, Calendar, ArrowUpCircle, ArrowDownCircle, Wallet, History, Search } from 'lucide-react';
 import { Perfil } from '../types';
+import { getBrasiliaDateString, getBrasiliaStartOfDay, getBrasiliaEndOfDay } from '../utils/dateUtils';
 
 interface FinanceProps {
   profile?: Perfil | null;
@@ -10,10 +11,7 @@ interface FinanceProps {
 
 const Finance: React.FC<FinanceProps> = ({ profile }) => {
   const getLocalDateString = (date = new Date()) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return getBrasiliaDateString(date);
   };
 
   const [resumoStores, setResumoStores] = useState<any[]>([]);
@@ -56,8 +54,8 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
     setLoading(true);
     try {
       // Calcular as fronteiras UTC correspondentes ao dia local
-      const startOfDay = new Date(`${startDate}T00:00:00`).toISOString();
-      const endOfDay = new Date(`${endDate}T23:59:59`).toISOString();
+      const startOfDay = getBrasiliaStartOfDay(startDate);
+      const endOfDay = getBrasiliaEndOfDay(endDate);
 
       // Usar funções RPC parametrizadas que filtram por período
       const { data: stores } = await supabase.rpc('fn_resumo_estabelecimentos_por_periodo', {
