@@ -48,62 +48,64 @@ const Modal: React.FC<ModalProps> = ({
     };
 
     return ReactDOM.createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 animate-fade">
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-start sm:justify-center p-4 sm:p-20 animate-fade overflow-y-auto">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm"
                 onClick={onClose}
             />
 
-            {/* Modal Content */}
-            <div className="relative w-full max-w-sm glass-card rounded-[2rem] p-8 border border-white/10 shadow-2xl z-10">
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-600 hover:text-white transition-colors"
-                >
-                    <X size={16} />
-                </button>
+            {/* Modal Content container to help with centering and scrolling */}
+            <div className="relative w-full max-w-sm my-auto">
+                <div className="glass-card rounded-[2rem] p-8 border border-white/10 shadow-2xl z-10 w-full">
+                    {/* Close Button */}
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-600 hover:text-white transition-colors"
+                    >
+                        <X size={16} />
+                    </button>
 
-                {/* Icon */}
-                <div className={`w-16 h-16 ${bgColorMap[type]} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
-                    {iconMap[type]}
-                </div>
-
-                {/* Title */}
-                <h2 className="text-lg font-black text-white text-center uppercase tracking-tight mb-2">
-                    {title}
-                </h2>
-
-                {/* Message / Content */}
-                {children ? (
-                    <div className="mb-8">
-                        {children}
+                    {/* Icon */}
+                    <div className={`w-16 h-16 ${bgColorMap[type]} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+                        {iconMap[type]}
                     </div>
-                ) : message && (
-                    <p className="text-[11px] text-gray-400 text-center leading-relaxed mb-8">
-                        {message}
-                    </p>
-                )}
 
-                {/* Actions */}
-                <div className="space-y-3">
-                    {primaryAction && (
-                        <button
-                            onClick={primaryAction.onClick}
-                            className="w-full h-14 bg-orange-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-orange-primary/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
-                        >
-                            {primaryAction.label}
-                        </button>
+                    {/* Title */}
+                    <h2 className="text-lg font-black text-white text-center uppercase tracking-tight mb-2">
+                        {title}
+                    </h2>
+
+                    {/* Message / Content */}
+                    {children ? (
+                        <div className="mb-8">
+                            {children}
+                        </div>
+                    ) : message && (
+                        <p className="text-[11px] text-gray-400 text-center leading-relaxed mb-8">
+                            {message}
+                        </p>
                     )}
-                    {secondaryAction && (
-                        <button
-                            onClick={secondaryAction.onClick}
-                            className="w-full h-12 bg-white/5 text-gray-400 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-all"
-                        >
-                            {secondaryAction.label}
-                        </button>
-                    )}
+
+                    {/* Actions */}
+                    <div className="space-y-3">
+                        {primaryAction && (
+                            <button
+                                onClick={primaryAction.onClick}
+                                className="w-full h-14 bg-orange-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-orange-primary/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                            >
+                                {primaryAction.label}
+                            </button>
+                        )}
+                        {secondaryAction && (
+                            <button
+                                onClick={secondaryAction.onClick}
+                                className="w-full h-12 bg-white/5 text-gray-400 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-all"
+                            >
+                                {secondaryAction.label}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>,
