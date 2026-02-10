@@ -309,6 +309,44 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
     }
   };
 
+  const handleUpdateAddress = async (store: any, index: number, isDb: boolean, deliveryId: string | null, newAddress: string) => {
+    if (!newAddress.trim()) {
+      alert('Endereço inválido');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const addressArray = [newAddress.trim()];
+      if (isDb && deliveryId) {
+        const { error } = await supabase
+          .from('entregas')
+          .update({ endereco_cliente: addressArray })
+          .eq('id', deliveryId);
+
+        if (error) throw error;
+      } else {
+        const delivery = store.entregas[index];
+        const jsonIndex = delivery.originalIndex;
+        if (jsonIndex === undefined || jsonIndex === null) {
+          throw new Error('Índice original da entrega não encontrado.');
+        }
+
+        const { error } = await supabase.rpc('editar_endereco_entrega_json', {
+          p_cliente_numero: store.numero_whatsapp,
+          p_json_index: jsonIndex,
+          p_novo_endereco: addressArray
+        });
+        if (error) throw error;
+      }
+      await fetchInboxData(true);
+    } catch (err: any) {
+      alert('Erro ao atualizar endereço: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (store: any, index: number, isDb: boolean, deliveryId: string | null) => {
     if (!confirm('Tem certeza que deseja EXCLUIR esta entrega permanentemente?')) return;
 
@@ -429,7 +467,21 @@ const DeliveriesInbox: React.FC<DeliveriesInboxProps> = ({ onAssignSuccess, prof
                       <div className="space-y-4 mb-6">
                         <div className="bg-black/20 p-4 rounded-2xl space-y-3 border border-white/5">
                           <div>
-                            <p className="text-[8px] text-lime-500 font-black uppercase tracking-widest mb-1">📍 Endereço de Entrega</p>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-[8px] text-lime-500 font-black uppercase tracking-widest">📍 Endereço de Entrega</p>
+                              {profile?.funcao === 'admin' && (
+                                <button
+                                  onClick={() => {
+                                    const novoEndereco = prompt('Novo endereço de entrega:', delivery.endereco_cliente.join(', '));
+                                    if (novoEndereco) handleUpdateAddress(store, dIdx, (delivery as any).isFromDB, (delivery as any).id, novoEndereco);
+                                  }}
+                                  className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                                  title="Editar endereço"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 hover:text-white"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                </button>
+                              )}
+                            </div>
                             <p className="text-[11px] text-gray-300 font-bold leading-tight">{delivery.endereco_cliente.join(', ') || 'N/A'}</p>
                           </div>
                           <div className="pt-2 border-t border-white/5">
