@@ -369,7 +369,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                           <FinanceRow
                             key={store.id}
                             title={store.nome}
-                            subtitle={`${store.total_entregas || 0} entregas totais`}
+                            subtitle={`${store.periodDeliveries || 0} ${store.periodDeliveries === 1 ? 'entrega' : 'entregas'} no período`}
                             value={store.saldo_faltante || 0}
                             orange={(store.saldo_faltante || 0) > 0}
                             periodLabel="Recebido"
