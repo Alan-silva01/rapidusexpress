@@ -470,6 +470,50 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
                 <h2 className="text-lg font-black uppercase tracking-tighter">Lançamento</h2>
                 <button onClick={() => setShowModal(false)} className="text-gray-600"><X size={20} /></button>
               </div>
+
+              {entidadeId && (
+                <div className="mb-6 p-5 rounded-3xl bg-orange-primary/10 border border-orange-primary/20 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-base font-black text-white uppercase tracking-tight leading-none">
+                        {tipo === 'recebimento_estabelecimento'
+                          ? resumoStores.find(s => s.id === entidadeId)?.nome
+                          : resumoDrivers.find(d => d.id === entidadeId)?.nome}
+                      </h3>
+                      <p className="text-[10px] font-black text-orange-primary uppercase tracking-widest mt-1">Resumo do Período</p>
+                    </div>
+                    <div className="bg-orange-primary text-white text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">
+                      {metodo}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-3 border-t border-orange-primary/10">
+                    <div>
+                      <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-0.5">Entregas</p>
+                      <p className="text-lg font-black text-white tracking-tighter">
+                        {(() => {
+                          const entity = tipo === 'recebimento_estabelecimento'
+                            ? resumoStores.find(s => s.id === entidadeId)
+                            : resumoDrivers.find(d => d.id === entidadeId);
+                          return entity?.periodDeliveries || 0;
+                        })()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mb-0.5">Saldo Devedor</p>
+                      <p className="text-lg font-black text-orange-primary tracking-tighter italic">
+                        R$ {(() => {
+                          const entity = tipo === 'recebimento_estabelecimento'
+                            ? resumoStores.find(s => s.id === entidadeId)
+                            : resumoDrivers.find(d => d.id === entidadeId);
+                          return (entity?.saldo_faltante || entity?.saldo_a_pagar || 0).toFixed(2);
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleAddTransaction} className="space-y-5">
                 <div className="flex p-1 bg-white/5 rounded-2xl">
                   <button type="button" onClick={() => setTipo('recebimento_estabelecimento')} className={`flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'recebimento_estabelecimento' ? 'bg-orange-primary text-white' : 'text-gray-600'}`}>Loja</button>
