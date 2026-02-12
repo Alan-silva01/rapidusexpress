@@ -42,7 +42,7 @@ const Finance: React.FC<FinanceProps> = ({ profile }) => {
   const [observacao, setObservacao] = useState('');
   const [dataTransacao, setDataTransacao] = useState(getLocalDateString());
 
-  const [startDate, setStartDate] = useState(getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
+  const [startDate, setStartDate] = useState(getLocalDateString());
   const [endDate, setEndDate] = useState(getLocalDateString());
   const [displayCount, setDisplayCount] = useState(30);
 
